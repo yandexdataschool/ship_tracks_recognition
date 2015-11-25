@@ -22,8 +22,17 @@ class ParametresYZ:
 def selector(data, StatNb, ViewNb, PlaneNb, LayerNb):
     return data.loc[(data.StatNb==StatNb)&(data.ViewNb==ViewNb)&(data.PlaneNb==PlaneNb)&(data.LayerNb==LayerNb)]
 
-#return k, b from equation y = k * x + b; input = two points
 def get_plane(point1, point2):
+    """
+    Finds parametres of the line y = k * x + b.
+    
+    Args:
+        point1: any point of the line represented as [x, y]
+        point2: another point of the line
+    
+    Returns:
+        tuple k, b; where k - tan(alpha), b - bias
+    """
     y1 = point1[0]
     z1 = point1[1]
     y2 = point2[0]
@@ -33,8 +42,22 @@ def get_plane(point1, point2):
     b = y1 - k*z1
     return k, b
 
-#select Y-views before magnet and add to dataframe 2 columns: Wz, Wy  - coordinates of centre of the tube
-def modify_for_yz_analisys(event):    
+def modify_for_yz_analisys(event):
+    """
+    Gets table of hits, fetchs only hits from Y-views and add to it columns 'Wz', 'Wy' - coordinates of centres of 
+    tubes in plane (z, y).
+    
+    Args:
+        event: pd.DataFrame() that necesserily contains this columns: 
+        'StatNb' - number of station,
+        'ViewNb' - number of view,
+        'PlaneNb' - number of plane,
+        'LayerNb' - number of layer,
+        'StrawNb' - number of straw.
+        
+    Returns:
+        the same pd.DataFrame() but with 2 new columns: 'Wz', 'Wy'
+    """
     layer1000 = selector(event, 1, 0, 0, 0)
     layer1001 = selector(event, 1, 0, 0, 1)
     layer1010 = selector(event, 1, 0, 1, 0)
@@ -130,30 +153,52 @@ def modify_for_yz_analisys(event):
 
     return pd.concat(layers, axis=0)
 
-#input: pd.DataFrame(); output: dictionary with key = Wz
 def conventor_yz(event):
+    """
+    Gets pd.DataFrame() and transforms it into dictionary.
+    
+    Args:
+        event: pd.DataFrame() that necesserily contains columns 'Wz', 'Wy', 'dist2Wire'.
+    Returns:
+        dictionary: keys are values of 'Wz'; values are stuctures with fields(y, dist2Wire, index)
+    """
     event = modify_for_yz_analisys(event)
     dictionary = {}
     for i in event.index:
         dictionary.setdefault(event.Wz[i], []).append(ParametresYZ(event.Wy[i], event.dist2Wire[i], event.Index[i]))
     return dictionary
 
-#for known k and b find ID's of hits crossing this line; also it returns linnear regression on this hits
 def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
+    """
+    Counts the number of points which intercept line with parametres: plane_k, plane_b, plane_width.
+    If the result more than n_min than makes linnear regression on this points.
+    
+    Args:
+        plane_k, plane_b, plane_width: parametres of line in 2d space (y, z). It's a hyperplane in 3d space;
+        hits: dictionary that contains all hits, key is z coordinate of centre of tube, value is structure 
+            with fields- y, dist2Wire, index;
+        n_min: minimal number of hits intercepting a track.
+    Returns:
+        indicator, crossing_points, lin_regr;
+        indicator: false- means line with this parametres doesn't cover a track,
+            true- line covers a track;
+        crossing_points: array of indexes of points that determine the track;
+        lin_regr: parametres k, b of linnear regression on crossing points. 
+    """
     lower_y = 0.
     upper_y = 0.
     crossing_points = []
     Y = [] # for linnear regression
     Z = []
     n = 0 # number of touched layers
-    for i in hits:
-        lower_y = plane_k * i + plane_b - 1. * plane_width
-        upper_y = plane_k * i + plane_b + 1. * plane_width
+    for z in hits:
+        lower_y = plane_k * z + plane_b - 1. * plane_width
+        upper_y = plane_k * z + plane_b + 1. * plane_width
         indicator = False
-        for j in hits[i]:
+        for j in hits[z]:
             if ((j.y < upper_y) & (j.y > lower_y)):
                 crossing_points.append(j.index)
-                Z.append(i)
+                Z.append(z)
                 Y.append(j.y)
                 indicator = True
         if indicator:
@@ -163,32 +208,56 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     else:
         lin_regr = np.polyfit(Z, Y, 1)
         return 1, crossing_points, lin_regr
-
-def loop_yz(event, n_min, plane_width):
-    hits = conventor_yz(event) # dictionary with hits: key = z; value = array of objects with fields(y, dist2Wire, index)
-    tracks = {} #finded tracks: key = id of recognized track; value = (k, p)
-    linking_table = {} # key = id of recognized track; value = array of hit ID's from the main table
-    trackID = 1
-    start_z = [2581.1500000000001, 2582.25]
-    end_z = [2813.75, 2814.85]
-    for start_key in (set(start_z) & set(hits.keys())):
-        for i in hits[start_key]:
-            for end_key in (set(end_z) & set(hits.keys())):
-                for j in hits[end_key]:
-                    k, b = get_plane((i.y, start_key), (j.y, end_key))
-                    indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n_min)
-                    if indicator == 1:
-                        tracks[trackID] = lin_regr
-                        linking_table[trackID] = crossing_points
-                        trackID += 1
-    return tracks, linking_table
-
+    
 def crossing_lines(k1, b1, k2, b2):
     z = (b2 - b1) / (k1 - k2)
     y = z * k1 + b1
     return (y, z)
 
+def loop_yz(event, n_min, plane_width):
+    """
+    Finds all possible candidates for being tracks in 2d-space (z, y). Algorithm uses only hits from Y-views. For all 
+    hits in the first plane and for all hits in the last plane it constructs lines using all possible pairs 
+    of points(point from the 1st plane, point from the last plane). All this line are supplied to points_crossing_line_yz().
+    
+    Args:
+        event: pd.DataFrame() with all hits of any event;
+        n_min: minimal number of points intercepting track for recognition this track;
+        plane_width: vertical window of finding line.
+    Returns:
+        tracks, linking_table
+        tracks: dictionary of all recognised lines in 2d space (y, z), key = id of track, value = (k, b);
+        linking_table: links each track from tracks and his hits, represented by dictionary:
+            key = id of track, value = array of indexes of his hits.
+    """
+    hits = conventor_yz(event) # dictionary with hits: key = z; value = array of objects with fields(y, dist2Wire, index)
+    tracks = {} #finded tracks: key = id of recognized track; value = (k, p)
+    linking_table = {} # key = id of recognized track; value = array of hit ID's from the main table
+    trackID = 1
+    start_zs = [2581.1500000000001, 2582.25]
+    end_zs = [2813.75, 2814.85]
+    for start_z in (set(start_zs) & set(hits.keys())):
+        for i in hits[start_z]:
+            for end_z in (set(end_zs) & set(hits.keys())):
+                for j in hits[end_z]:
+                    k, b = get_plane((i.y, start_z), (j.y, end_z))
+                    indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n_min)
+                    if indicator == 1:
+                        tracks[trackID] = lin_regr
+                        linking_table[trackID] = crossing_points
+                        trackID += 1
+    return remove_unnecessary_yz(tracks, linking_table)
+
 def remove_unnecessary_yz(tracks, linking_table):
+    """
+    Rejects tracks that leave volume of installation.
+    
+    Args:
+        tracks: candidates to track;
+        linking_table: links tracks with hits.
+    Returns:
+        tracks, linking_table without rejected tracks.
+    """
     tracks_for_remove = []
     for i in tracks:
         y = tracks[i][0] * 3000 + tracks[i][1]
