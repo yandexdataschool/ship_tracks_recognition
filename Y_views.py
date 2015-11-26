@@ -183,7 +183,8 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
         indicator: false- means line with this parametres doesn't cover a track,
             true- line covers a track;
         crossing_points: array of indexes of points that determine the track;
-        lin_regr: parametres k, b of linnear regression on crossing points. 
+        lin_regr: parametres k, b of linnear regression on crossing points; 
+        hits: input dict of hits without points intercepting line(in case when number of points more than n_min).
     """
     lower_y = 0.
     upper_y = 0.
@@ -191,23 +192,29 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     Y = [] # for linnear regression
     Z = []
     n = 0 # number of touched layers
+    remove_dict = {}
     for z in hits:
+        remove_dict[z] = []
         lower_y = plane_k * z + plane_b - 1. * plane_width
         upper_y = plane_k * z + plane_b + 1. * plane_width
         indicator = False
-        for j in hits[z]:
-            if ((j.y < upper_y) & (j.y > lower_y)):
-                crossing_points.append(j.index)
+        for j in range(len(hits[z])):
+            if ((hits[z][j].y < upper_y) & (hits[z][j].y > lower_y)):
+                crossing_points.append(hits[z][j].index)
                 Z.append(z)
-                Y.append(j.y)
+                Y.append(hits[z][j].y)
+                remove_dict[z].append(hits[z][j])
                 indicator = True
         if indicator:
             n += 1
     if n < n_min:
-        return 0, crossing_points, [0., 0.]
+        return 0, crossing_points, [0., 0.], hits
     else:
         lin_regr = np.polyfit(Z, Y, 1)
-        return 1, crossing_points, lin_regr
+        for z in hits:
+            for i in remove_dict[z]:
+                hits[z].remove(i)
+        return 1, crossing_points, lin_regr, hits
     
 def crossing_lines(k1, b1, k2, b2):
     z = (b2 - b1) / (k1 - k2)
@@ -241,7 +248,7 @@ def loop_yz(event, n_min, plane_width):
             for end_z in (set(end_zs) & set(hits.keys())):
                 for j in hits[end_z]:
                     k, b = get_plane((i.y, start_z), (j.y, end_z))
-                    indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n_min)
+                    indicator, crossing_points, lin_regr, hits = points_crossing_line_yz(k, b, plane_width, hits, n_min)
                     if indicator == 1:
                         tracks[trackID] = lin_regr
                         linking_table[trackID] = crossing_points
