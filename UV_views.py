@@ -192,7 +192,7 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
         upper_x = k * z + b + 1. * width
         indicator = False
         for j in intersecting_hits[z]:
-            if ((hits[z][j].x < upper_x) & (hits[z][j].x > lower_x) & (not hits[z][j].used)):
+            if ((hits[z][j].x < upper_x) & (hits[z][j].x > lower_x) & (not hits[z][j].used) & (not indicator)):
                 crossing_points.append(j)
                 Z.append(z)
                 X.append(hits[z][j].x)
