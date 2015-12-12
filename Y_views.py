@@ -43,7 +43,7 @@ def get_plane(point1, point2):
     b = y1 - k*z1
     return k, b
 
-def modify_for_yz_analisys(event):
+def modify_for_yz_analysis(event):
     """
     Gets table of hits, fetchs only hits from Y-views and add to it columns 'Wz', 'Wy' - coordinates of centres of 
     tubes in plane (z, y).
@@ -163,7 +163,7 @@ def conventor_yz(event):
     Returns:
         dictionary: keys are values of 'Wz'; values are stuctures with fields(y, dist2Wire, index, used)
     """
-    event = modify_for_yz_analisys(event)
+    event = modify_for_yz_analysis(event)
     dictionary = {}
     for i in event.index:
         dictionary.setdefault(event.Wz[i], []).append(ParametresYZ(event.Wy[i], event.dist2Wire[i], event.Index[i], False))
@@ -177,7 +177,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     Args:
         plane_k, plane_b, plane_width: parametres of line in 2d space (y, z). It's a hyperplane in 3d space;
         hits: dictionary that contains all hits, key is z coordinate of centre of tube, value is structure 
-            with fields- y, dist2Wire, index;
+            with fields- y, dist2Wire, index, used;
         n_min: minimal number of hits intercepting a track.
     Returns:
         indicator, crossing_points, lin_regr;
@@ -192,6 +192,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     crossing_points = []
     Y = [] # for linnear regression
     Z = []
+    weights = []
     n = 0 # number of touched layers
     for z in hits:
         marks[z] = []
@@ -203,6 +204,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
                 crossing_points.append(hits[z][j].index)
                 Z.append(z)
                 Y.append(hits[z][j].y)
+                weights.append(1/(hits[z][j].dist2Wire)**(0.5))
                 marks[z].append(j)
                 indicator = True
         if indicator:
@@ -210,10 +212,10 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     if n < n_min:
         return 0, crossing_points, [0., 0.]
     else:
-        lin_regr = np.polyfit(Z, Y, 1)
+        lin_regr = np.polyfit(Z, Y, 1, w = weights)
         for z in hits:
-                for i in marks[z]:
-                    hits[z][i].used = True
+            for i in marks[z]:
+                hits[z][i].used = True
         return 1, crossing_points, lin_regr
     
 def crossing_lines(k1, b1, k2, b2):
@@ -225,7 +227,7 @@ def loop_yz(event, n_min, plane_width):
     """
     Finds all possible candidates for being tracks in 2d-space (z, y). Algorithm uses only hits from Y-views. For all 
     hits in the first plane and for all hits in the last plane it constructs lines using all possible pairs 
-    of points(point from the 1st plane, point from the last plane). All this line are supplied to points_crossing_line_yz().
+    of points(point from the 1st plane, point from the last plane). All this lines are supplied to points_crossing_line_yz().
     
     Args:
         event: pd.DataFrame() with all hits of any event;
