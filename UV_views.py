@@ -228,6 +228,7 @@ def loop_xz(event, tracks, linking_table, n_min, width):
     hits = conventor_xz(event)
     new_linking_table = {}
     new_tracks = {}
+    x_coordinates = {}
     new_trackID = 1
     start_zs = [2591.2793, 2592.3793000000001]
     end_zs = [2806.0792999999999, 2804.9793]
@@ -242,6 +243,7 @@ def loop_xz(event, tracks, linking_table, n_min, width):
                 x = hits[z][hit_index].dist2Centre * sin(hits[z][hit_index].angle) + (hits[z][hit_index].dist2Centre * cos(hits[z][hit_index].angle) - y) / tan(hits[z][hit_index].angle)
                 if ((x > -250) & (x < 250) & (not hits[z][hit_index].used)):
                     hits[z][hit_index].x = x
+                    x_coordinates[hit_index] = x
                     intersecting_hits.setdefault(z, []).append(hit_index)
                     n += 1
         if (n >= n_min):
@@ -256,4 +258,4 @@ def loop_xz(event, tracks, linking_table, n_min, width):
                                     new_tracks[track_id * 10000 + new_trackID] = lin_regr
                                     new_linking_table[track_id * 10000 + new_trackID] = crossing_points
                                     new_trackID += 1
-    return new_tracks, new_linking_table
+    return new_tracks, new_linking_table, x_coordinates
