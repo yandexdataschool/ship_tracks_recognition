@@ -29,7 +29,7 @@ class MarginLinearRegression(object):
 
         :param numby.ndarray Rx: array of distances on X axis to the wires centers with shape (n_samples, 1).
 
-        :param numby.ndarray Yx: array of distances on Y axis to the wires centers with shape (n_samples, 1).
+        :param numby.ndarray Ry: array of distances on Y axis to the wires centers with shape (n_samples, 1).
         """
         lr = LinearRegression()
         weights = (numpy.sqrt((1./Rx)**2 + (1./Ry)**2)).reshape(len(X), )
