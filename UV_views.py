@@ -35,10 +35,10 @@ def get_plane(point1, point2):
     b = y1 - k*z1
     return k, b
 
-def modify_for_xz_analysis(event):
+def modify_for_xz_analysis_1_2(event):
     """
-    Gets table of hits, fetchs only hits from U,V-views and add to it columns 'Wz', 'dist2Centre' - z-coordinates of centres of 
-    tubes and distances from tubes to point (0, 0).
+    Gets table of hits, fetchs only hits from U,V-views (1 & 2 stations) and add to it columns 'Wz', 'dist2Centre' - 
+    z-coordinates of centres of tubes and distances from tubes to point (0, 0).
     
     Args:
         event: pd.DataFrame() that necesserily contains this columns: 
@@ -73,70 +73,70 @@ def modify_for_xz_analysis(event):
     
     #1-u
     z1100 = 2598. - 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer1100.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer1100.StrawNb.values-1)) + 499
+    layer1100.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer1100.StrawNb.values-1)) + 499 + 0.44
     layer1100.loc[:, 'Wz'] = np.ones(layer1100.shape[0])*z1100
 
     z1101 = z1100 + 1.1
-    layer1101.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer1101.StrawNb.values-1)) + 499
+    layer1101.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer1101.StrawNb.values-1)) + 499 + 0.44
     layer1101.loc[:, 'Wz'] = np.ones(layer1101.shape[0])*z1101
 
     z1110 = z1100 + 2.6
-    layer1110.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer1110.StrawNb.values-1)) + 499
+    layer1110.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer1110.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer1110.loc[:, 'Wz'] = np.ones(layer1110.shape[0])*z1110
 
     z1111 = z1110 + 1.1
-    layer1111.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1111.StrawNb.values-1)) + 499
+    layer1111.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1111.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer1111.loc[:, 'Wz'] = np.ones(layer1111.shape[0])*z1111
 
     #1-v
     z1200 = 2598. + 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer1200.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer1200.StrawNb.values-1)) + 499
+    layer1200.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer1200.StrawNb.values-1)) + 499 + 0.44
     layer1200.loc[:, 'Wz'] = np.ones(layer1200.shape[0])*z1200
     
     z1201 = z1200 + 1.1
-    layer1201.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer1201.StrawNb.values-1)) + 499
+    layer1201.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer1201.StrawNb.values-1)) + 499 + 0.44
     layer1201.loc[:, 'Wz'] = np.ones(layer1201.shape[0])*z1201
 
     z1210 = z1200 + 2.6
-    layer1210.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer1210.StrawNb.values-1)) + 499
+    layer1210.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer1210.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer1210.loc[:, 'Wz'] = np.ones(layer1210.shape[0])*z1210
 
     z1211 = z1210 + 1.1
-    layer1211.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1211.StrawNb.values-1)) + 499
+    layer1211.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1211.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer1211.loc[:, 'Wz'] = np.ones(layer1211.shape[0])*z1211
 
     #2-u
     z2100 = 2798. - 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer2100.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer2100.StrawNb.values-1)) + 499
+    layer2100.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer2100.StrawNb.values-1)) + 499 + 0.44
     layer2100.loc[:, 'Wz'] = np.ones(layer2100.shape[0])*z2100
 
     z2101 = z2100 + 1.1
-    layer2101.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer2101.StrawNb.values-1)) + 499
+    layer2101.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer2101.StrawNb.values-1)) + 499 + 0.44
     layer2101.loc[:, 'Wz'] = np.ones(layer2101.shape[0])*z2101
 
     z2110 = z2100 + 2.6
-    layer2110.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer2110.StrawNb.values-1)) + 499
+    layer2110.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer2110.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer2110.loc[:, 'Wz'] = np.ones(layer2110.shape[0])*z2110
 
     z2111 = z2110 + 1.1
-    layer2111.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2111.StrawNb.values-1)) + 499
+    layer2111.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2111.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer2111.loc[:, 'Wz'] = np.ones(layer2111.shape[0])*z2111
 
     #2-v
     z2200 = 2798. + 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer2200.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer2200.StrawNb.values-1)) + 499
+    layer2200.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer2200.StrawNb.values-1)) + 499 + 0.44
     layer2200.loc[:, 'Wz'] = np.ones(layer2200.shape[0])*z2200
 
     z2201 = z2200 + 1.1
-    layer2201.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer2201.StrawNb.values-1)) + 499
+    layer2201.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer2201.StrawNb.values-1)) + 499 + 0.44
     layer2201.loc[:, 'Wz'] = np.ones(layer2201.shape[0])*z2201
 
     z2210 = z2200 + 2.6
-    layer2210.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer2210.StrawNb.values-1)) + 499
+    layer2210.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer2210.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer2210.loc[:, 'Wz'] = np.ones(layer2210.shape[0])*z2210
 
     z2211 = z2210 + 1.1
-    layer2211.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2211.StrawNb.values-1)) + 499
+    layer2211.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2211.StrawNb.values-1)) + 499 + 0.44 - 0.88
     layer2211.loc[:, 'Wz'] = np.ones(layer2211.shape[0])*z2211
     
     layers = [layer1100, layer1101, layer1110, layer1111,
@@ -146,16 +146,131 @@ def modify_for_xz_analysis(event):
 
     return pd.concat(layers, axis=0)
 
-def conventor_xz(event):
+def modify_for_xz_analysis_3_4(event):
+    """
+    Gets table of hits, fetchs only hits from U,V-views (3 & 4 stations) and adds to it columns 'Wz', 'dist2Centre'- 
+    coordinates of centres of tubes in plane (z, y).
+    
+    Args:
+        event: pd.DataFrame() that necesserily contains this columns: 
+        'StatNb' - number of station,
+        'ViewNb' - number of view,
+        'PlaneNb' - number of plane,
+        'LayerNb' - number of layer,
+        'StrawNb' - number of straw.
+        
+    Returns:
+        the same pd.DataFrame() but with 2 new columns: 'Wz', 'Wy'
+    """
+    layer3100 = selector(event, 3, 1, 0, 0)
+    layer3101 = selector(event, 3, 1, 0, 1)
+    layer3110 = selector(event, 3, 1, 1, 0)
+    layer3111 = selector(event, 3, 1, 1, 1)
+
+    layer3200 = selector(event, 3, 2, 0, 0)
+    layer3201 = selector(event, 3, 2, 0, 1)
+    layer3210 = selector(event, 3, 2, 1, 0)
+    layer3211 = selector(event, 3, 2, 1, 1)
+
+    layer4100 = selector(event, 4, 1, 0, 0)
+    layer4101 = selector(event, 4, 1, 0, 1)
+    layer4110 = selector(event, 4, 1, 1, 0)
+    layer4111 = selector(event, 4, 1, 1, 1)
+
+    layer4200 = selector(event, 4, 2, 0, 0)
+    layer4201 = selector(event, 4, 2, 0, 1)
+    layer4210 = selector(event, 4, 2, 1, 0)
+    layer4211 = selector(event, 4, 2, 1, 1)
+    
+    #3-u
+    z3100 = 3338. - 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
+    layer3100.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer3100.StrawNb.values-1)) + 499 + 0.44
+    layer3100.loc[:, 'Wz'] = np.ones(layer3100.shape[0])*z3100
+
+    z3101 = z3100 + 1.1
+    layer3101.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer3101.StrawNb.values-1)) + 499 + 0.44
+    layer3101.loc[:, 'Wz'] = np.ones(layer3101.shape[0])*z3101
+
+    z3110 = z3100 + 2.6
+    layer3110.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer3110.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3110.loc[:, 'Wz'] = np.ones(layer3110.shape[0])*z3110
+
+    z3111 = z3110 + 1.1
+    layer3111.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer3111.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3111.loc[:, 'Wz'] = np.ones(layer3111.shape[0])*z3111
+
+    #3-v
+    z3200 = 3338. + 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
+    layer3200.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer3200.StrawNb.values-1)) + 499 + 0.44
+    layer3200.loc[:, 'Wz'] = np.ones(layer3200.shape[0])*z3200
+    
+    z3201 = z3200 + 1.1
+    layer3201.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer3201.StrawNb.values-1)) + 499 + 0.44
+    layer3201.loc[:, 'Wz'] = np.ones(layer3201.shape[0])*z3201
+
+    z3210 = z3200 + 2.6
+    layer3210.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer3210.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3210.loc[:, 'Wz'] = np.ones(layer3210.shape[0])*z3210
+
+    z3211 = z3210 + 1.1
+    layer3211.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer3211.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3211.loc[:, 'Wz'] = np.ones(layer3211.shape[0])*z3211
+
+    #4-u
+    z4100 = 3538. - 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
+    layer4100.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer4100.StrawNb.values-1)) + 499 + 0.44
+    layer4100.loc[:, 'Wz'] = np.ones(layer4100.shape[0])*z4100
+
+    z4101 = z4100 + 1.1
+    layer4101.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer4101.StrawNb.values-1)) + 499 + 0.44
+    layer4101.loc[:, 'Wz'] = np.ones(layer4101.shape[0])*z4101
+
+    z4110 = z4100 + 2.6
+    layer4110.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer4110.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4110.loc[:, 'Wz'] = np.ones(layer4110.shape[0])*z4110
+
+    z4111 = z4110 + 1.1
+    layer4111.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer4111.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4111.loc[:, 'Wz'] = np.ones(layer4111.shape[0])*z4111
+
+    #4-v
+    z4200 = 3538. + 5. - 0.25*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
+    layer4200.loc[:, 'dist2Centre'] = -(0.5*0.9828 + 1.76*(layer4200.StrawNb.values-1)) + 499 + 0.44
+    layer4200.loc[:, 'Wz'] = np.ones(layer4200.shape[0])*z4200
+
+    z4201 = z4200 + 1.1
+    layer4201.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.88 + 1.76*(layer4201.StrawNb.values-1)) + 499 + 0.44
+    layer4201.loc[:, 'Wz'] = np.ones(layer4201.shape[0])*z4201
+
+    z4210 = z4200 + 2.6
+    layer4210.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 + 1.76*(layer4210.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4210.loc[:, 'Wz'] = np.ones(layer4210.shape[0])*z4210
+
+    z4211 = z4210 + 1.1
+    layer4211.loc[:, 'dist2Centre'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer4211.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4211.loc[:, 'Wz'] = np.ones(layer4211.shape[0])*z4211
+    
+    layers = [layer3100, layer3101, layer3110, layer3111,
+              layer3200, layer3201, layer3210, layer3211,
+              layer4100, layer4101, layer4110, layer4111,
+              layer4200, layer4201, layer4210, layer4211]
+
+    return pd.concat(layers, axis=0)
+
+def conventor_xz(event, indicator):
     """
     Gets pd.DataFrame() and transforms it into dictionary.
     
     Args:
-        event: pd.DataFrame() that necesserily contains columns 'Wz', 'dist2Centre', 'dist2Wire', 'ViewNb'.
+        event: pd.DataFrame() that necesserily contains columns 'Wz', 'dist2Centre', 'dist2Wire', 'ViewNb';
+        indicator: 0 = 1 & 2 stations, 1 = 3 & 4 stations.
     Returns:
         dictionary: keys are values of 'Wz'; values are stuctures with fields(dist2Centre, dist2Wire, angle, x, index, used).
     """
-    event = modify_for_xz_analysis(event)
+    if (indicator):
+        event = modify_for_xz_analysis_3_4(event)
+    else:
+        event = modify_for_xz_analysis_1_2(event)
     dictionary = {}
     for i in event.index:
         dictionary.setdefault(event.Wz[i], {})[i] = parametresXZ(event.dist2Centre[i], event.dist2Wire[i], (event.ViewNb[i] - 1.5) * 2 * np.pi / 36, 50000, False)
@@ -182,7 +297,7 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
     lower_x = 0.
     upper_x = 0.
     crossing_points = []
-    X = [] # for linnear regression
+    X = [] # for linear regression
     Z = []
     n = 0 # number of touched layers
     marks = {}
@@ -208,7 +323,7 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
                 hits[z][i].used = True
         return 1, crossing_points, lin_regr
 
-def loop_xz(event, tracks, linking_table, n_min, width):
+def loop_xz(event, tracks, linking_table, n_min, width, ind):
     """
     Gets tracks and linking_table received from previous stage Y-views analysis. Fetches only tracks which intersect 
     more than n_min hits in 2d-space (z, x). Every track may be rejected or give 1 and more tracks in 2d-space (z, x).
@@ -225,13 +340,20 @@ def loop_xz(event, tracks, linking_table, n_min, width):
         new_linking_table: links each track from new_tracks and his hits, represented by dictionary:
             key = id of track, value = array of indexes of his hits.
     """
-    hits = conventor_xz(event)
+    hits = conventor_xz(event, ind)
     new_linking_table = {}
     new_tracks = {}
     x_coordinates = {}
+    tmp = {}
     new_trackID = 1
-    start_zs = [2591.2793, 2592.3793000000001]
-    end_zs = [2806.0792999999999, 2804.9793]
+    start_zs = []
+    end_zs = []
+    if (ind):
+        start_zs = [3331.2793, 3332.3793]
+        end_zs = [3544.9793, 3546.0793]
+    else:
+        start_zs = [2591.2793, 2592.3793000000001]
+        end_zs = [2806.0792999999999, 2804.9793]
     for track_id in tracks:
         intersecting_hits = {}
         k = tracks[track_id][0]
@@ -243,7 +365,7 @@ def loop_xz(event, tracks, linking_table, n_min, width):
                 x = hits[z][hit_index].dist2Centre * sin(hits[z][hit_index].angle) + (hits[z][hit_index].dist2Centre * cos(hits[z][hit_index].angle) - y) / tan(hits[z][hit_index].angle)
                 if ((x > -250) & (x < 250) & (not hits[z][hit_index].used)):
                     hits[z][hit_index].x = x
-                    x_coordinates[hit_index] = x
+                    tmp[hit_index] = x
                     intersecting_hits.setdefault(z, []).append(hit_index)
                     n += 1
         if (n >= n_min):
@@ -257,5 +379,7 @@ def loop_xz(event, tracks, linking_table, n_min, width):
                                 if indicator == 1:
                                     new_tracks[track_id * 10000 + new_trackID] = lin_regr
                                     new_linking_table[track_id * 10000 + new_trackID] = crossing_points
+                                    for k in crossing_points:
+                                        x_coordinates[k] = tmp[k]
                                     new_trackID += 1
     return new_tracks, new_linking_table, x_coordinates
