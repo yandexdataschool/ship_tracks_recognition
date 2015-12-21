@@ -297,7 +297,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     lower_y = 0.
     upper_y = 0.
     crossing_points = []
-    Y = [] # for linnear regression
+    Y = [] # for linear regression
     Z = []
     weights = []
     n = 0 # number of touched layers
