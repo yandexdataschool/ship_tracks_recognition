@@ -297,17 +297,17 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     lower_y = 0.
     upper_y = 0.
     crossing_points = []
-    Y = [] # for linnear regression
+    Y = [] # for linear regression
     Z = []
     weights = []
     n = 0 # number of touched layers
     for z in hits:
         marks[z] = []
-        lower_y = plane_k * z + plane_b - 1. * plane_width
-        upper_y = plane_k * z + plane_b + 1. * plane_width
+        lower_y = plane_k * z + plane_b - 1. * plane_width #/ np.cos(np.arctan(plane_k))
+        upper_y = plane_k * z + plane_b + 1. * plane_width #/ np.cos(np.arctan(plane_k))
         indicator = False
         for j in range(len(hits[z])):
-            if ((hits[z][j].y < upper_y) & (hits[z][j].y > lower_y) & (not hits[z][j].used)):
+            if ((hits[z][j].y < upper_y) & (hits[z][j].y > lower_y) & (not hits[z][j].used) & (not indicator)):
                 crossing_points.append(hits[z][j].index)
                 Z.append(z)
                 Y.append(hits[z][j].y)
@@ -352,9 +352,9 @@ def loop_yz(event, n_min, plane_width, ind):
     end_zs = []
     if (ind):
         start_zs = [3321.15, 3322.25]
-        end_zs = [3554.85, 3555.95]
+        end_zs = [3553.75, 3554.85]
     else:
-        start_zs = [2581.1500000000001, 2582.25]
+        start_zs = [2581.15, 2582.25]
         end_zs = [2813.75, 2814.85]
     tracks = {} #finded tracks: key = id of recognized track; value = (k, p)
     linking_table = {} # key = id of recognized track; value = array of hit ID's from the main table

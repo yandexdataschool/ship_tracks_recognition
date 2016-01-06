@@ -303,8 +303,8 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
     marks = {}
     for z in intersecting_hits:
         marks[z] = []
-        lower_x = k * z + b - 1. * width
-        upper_x = k * z + b + 1. * width
+        lower_x = k * z + b - 1. * width #/ np.cos(np.arctan(k))
+        upper_x = k * z + b + 1. * width #/ np.cos(np.arctan(k))
         indicator = False
         for j in intersecting_hits[z]:
             if ((hits[z][j].x < upper_x) & (hits[z][j].x > lower_x) & (not hits[z][j].used) & (not indicator)):
@@ -350,10 +350,10 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
     end_zs = []
     if (ind):
         start_zs = [3331.2793, 3332.3793]
-        end_zs = [3544.9793, 3546.0793]
+        end_zs = [3544.9793, 3543.8793]
     else:
-        start_zs = [2591.2793, 2592.3793000000001]
-        end_zs = [2806.0792999999999, 2804.9793]
+        start_zs = [2591.2793, 2592.3793]
+        end_zs = [2803.8793, 2804.9793]
     for track_id in tracks:
         intersecting_hits = {}
         k = tracks[track_id][0]
