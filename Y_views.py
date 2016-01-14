@@ -1,9 +1,12 @@
+__author__ = 'Alenkin Oleg, Mikhail Hushchyn'
+
 import numpy as np
 import pandas as pd
 from math import *
 
 
 class ParametresYZ:
+
     def __init__(self, y, dist2Wire, index, used):
         self.dist2Wire = dist2Wire
         self.y = y
@@ -13,6 +16,7 @@ class ParametresYZ:
 
 def selector(data, StatNb, ViewNb, PlaneNb, LayerNb):
     return data.loc[(data.StatNb==StatNb)&(data.ViewNb==ViewNb)&(data.PlaneNb==PlaneNb)&(data.LayerNb==LayerNb)]
+
 
 def get_plane(point1, point2):
     """
@@ -25,6 +29,7 @@ def get_plane(point1, point2):
     Returns:
         tuple k, b; where k - tan(alpha), b - bias
     """
+
     y1 = point1[0]
     z1 = point1[1]
     y2 = point2[0]
@@ -32,6 +37,7 @@ def get_plane(point1, point2):
     
     k = float(y2 - y1)/float(z2 - z1)
     b = y1 - k*z1
+
     return k, b
 
 def modify_for_yz_analysis_1_2(event):
@@ -257,6 +263,8 @@ def modify_for_yz_analysis_3_4(event):
 
     return pd.concat(layers, axis=0)
 
+
+
 def conventor_yz(event, indicator):
     """
     Gets pd.DataFrame() and transforms it into dictionary.
@@ -267,14 +275,28 @@ def conventor_yz(event, indicator):
     Returns:
         dictionary: keys are values of 'Wz'; values are stuctures with fields(y, dist2Wire, index, used).
     """
+
     if (indicator):
+
         event = modify_for_yz_analysis_3_4(event)
+
     else:
+
         event = modify_for_yz_analysis_1_2(event)
+
+
+
     dictionary = {}
+
     for i in event.index:
-        dictionary.setdefault(event.Wz[i], []).append(ParametresYZ(event.Wy[i], event.dist2Wire[i], event.Index[i], False))
+
+        params = ParametresYZ(event.Wy[i], event.dist2Wire[i], event.Index[i], False)
+        dictionary.setdefault(event.Wz[i], []).append(params)
+
+
     return dictionary
+
+
 
 def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     """
@@ -293,42 +315,66 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
         crossing_points: array of indexes of points that determine the track;
         lin_regr: parametres k, b of linnear regression on crossing points.
     """
+
     marks = {}
-    lower_y = 0.
-    upper_y = 0.
     crossing_points = []
     Y = [] # for linear regression
     Z = []
     weights = []
     n = 0 # number of touched layers
+
+
     for z in hits:
+
         marks[z] = []
+        indicator = False
+
         lower_y = plane_k * z + plane_b - 1. * plane_width #/ np.cos(np.arctan(plane_k))
         upper_y = plane_k * z + plane_b + 1. * plane_width #/ np.cos(np.arctan(plane_k))
-        indicator = False
+
         for j in range(len(hits[z])):
+
             if ((hits[z][j].y < upper_y) & (hits[z][j].y > lower_y) & (not hits[z][j].used) & (not indicator)):
+
                 crossing_points.append(hits[z][j].index)
                 Z.append(z)
                 Y.append(hits[z][j].y)
                 weights.append(1 / (hits[z][j].dist2Wire)**(0.5))
                 marks[z].append(j)
                 indicator = True
+
         if indicator:
             n += 1
+
+
     if n < n_min:
+
         return 0, crossing_points, [0., 0.]
+
+
     else:
+
         lin_regr = np.polyfit(Z, Y, 1, w = weights)
+
         for z in hits:
+
             for i in marks[z]:
+
                 hits[z][i].used = True
+
         return 1, crossing_points, lin_regr
-    
+
+
+
+
+
 def crossing_lines(k1, b1, k2, b2):
+
     z = (b2 - b1) / (k1 - k2)
     y = z * k1 + b1
+
     return (y, z)
+
 
 def loop_yz(event, n_min, plane_width, ind):
     """
@@ -347,29 +393,45 @@ def loop_yz(event, n_min, plane_width, ind):
         linking_table: links each track from tracks and his hits, represented by dictionary:
             key = id of track, value = array of indexes of his hits.
     """
+
     hits = conventor_yz(event, ind) # dictionary with hits: key = z; value = array of objects with fields(y, dist2Wire, index)
-    start_zs = []
-    end_zs = []
+
+
     if (ind):
+
         start_zs = [3321.15, 3322.25]
         end_zs = [3553.75, 3554.85]
+
     else:
+
         start_zs = [2581.15, 2582.25]
         end_zs = [2813.75, 2814.85]
+
+
     tracks = {} #finded tracks: key = id of recognized track; value = (k, p)
     linking_table = {} # key = id of recognized track; value = array of hit ID's from the main table
     trackID = 1
+
     for start_z in (set(start_zs) & set(hits.keys())):
+
         for i in hits[start_z]:
+
             for end_z in (set(end_zs) & set(hits.keys())):
+
                 for j in hits[end_z]:
+
                     k, b = get_plane((i.y, start_z), (j.y, end_z))
+
                     indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n_min)
+
                     if indicator == 1:
                         tracks[trackID] = lin_regr
                         linking_table[trackID] = crossing_points
                         trackID += 1
+
     return remove_unnecessary_yz(tracks, linking_table)
+
+
 
 def remove_unnecessary_yz(tracks, linking_table):
     """
@@ -381,12 +443,21 @@ def remove_unnecessary_yz(tracks, linking_table):
     Returns:
         tracks, linking_table without rejected tracks.
     """
+
     tracks_for_remove = []
+
     for i in tracks:
+
         y = tracks[i][0] * 3000 + tracks[i][1]
+
         if ((y < -500) | (y > 500)):
             tracks_for_remove.append(i)
+
+
     for i in tracks_for_remove:
+
         tracks.pop(i, None)
         linking_table.pop(i, None)
+
+        
     return tracks, linking_table
