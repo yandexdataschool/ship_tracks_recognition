@@ -640,31 +640,33 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
                     n += 1
 
         if (n >= n_min):
+            
+            for m in range(16, n_min - 1, -1):
 
-            for start_z in (set(start_zs) & set(intersecting_hits)):
+                for start_z in (set(start_zs) & set(intersecting_hits)):
 
-                for i in intersecting_hits[start_z]:
+                    for i in intersecting_hits[start_z]:
 
-                    for end_z in (set(end_zs) & set(intersecting_hits)):
+                        for end_z in (set(end_zs) & set(intersecting_hits)):
 
-                        for j in intersecting_hits[end_z]:
+                            for j in intersecting_hits[end_z]:
 
-                            if ((not hits[start_z][i].used) & (not hits[end_z][j].used)):
+                                if ((not hits[start_z][i].used) & (not hits[end_z][j].used)):
 
-                                new_k, new_b = get_plane((hits[start_z][i].x, start_z), (hits[end_z][j].x, end_z))
+                                    new_k, new_b = get_plane((hits[start_z][i].x, start_z), (hits[end_z][j].x, end_z))
 
-                                indicator, crossing_points, lin_regr = \
-                                    points_crossing_line_xz(new_k, new_b, width, hits, intersecting_hits, n_min)
+                                    indicator, crossing_points, lin_regr = \
+                                        points_crossing_line_xz(new_k, new_b, width, hits, intersecting_hits, m)
 
-                                if indicator == 1:
+                                    if indicator == 1:
 
-                                    new_tracks[track_id * 10000 + new_trackID] = lin_regr
-                                    new_linking_table[track_id * 10000 + new_trackID] = crossing_points
+                                        new_tracks[track_id * 10000 + new_trackID] = lin_regr
+                                        new_linking_table[track_id * 10000 + new_trackID] = crossing_points
 
-                                    for k in crossing_points:
-                                        x_coordinates[k] = tmp[k]
+                                        for k in crossing_points:
+                                            x_coordinates[k] = tmp[k]
 
-                                    new_trackID += 1
+                                        new_trackID += 1
 
 
     return new_tracks, new_linking_table, x_coordinates
