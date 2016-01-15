@@ -412,22 +412,26 @@ def loop_yz(event, n_min, plane_width, ind):
     linking_table = {} # key = id of recognized track; value = array of hit ID's from the main table
     trackID = 1
 
-    for start_z in (set(start_zs) & set(hits.keys())):
+    for n in range(16, n_min - 1, -1):
+    
+        for start_z in (set(start_zs) & set(hits.keys())):
 
-        for i in hits[start_z]:
+            for i in hits[start_z]:
 
-            for end_z in (set(end_zs) & set(hits.keys())):
+                for end_z in (set(end_zs) & set(hits.keys())):
 
-                for j in hits[end_z]:
+                    for j in hits[end_z]:
+                        
+                        if ((not i.used) & (not j.used)):
 
-                    k, b = get_plane((i.y, start_z), (j.y, end_z))
+                            k, b = get_plane((i.y, start_z), (j.y, end_z))
 
-                    indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n_min)
+                            indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n)
 
-                    if indicator == 1:
-                        tracks[trackID] = lin_regr
-                        linking_table[trackID] = crossing_points
-                        trackID += 1
+                            if indicator == 1:
+                                tracks[trackID] = lin_regr
+                                linking_table[trackID] = crossing_points
+                                trackID += 1
 
     return remove_unnecessary_yz(tracks, linking_table)
 
