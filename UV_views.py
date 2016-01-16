@@ -582,8 +582,6 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
             key = id of track, value = array of indexes of his hits.
     """
 
-    hits = conventor_xz(event, ind)
-
     new_linking_table = {}
     new_tracks = {}
 
@@ -612,7 +610,9 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
         event = modify_for_xz_analysis_1_2(event)
 
 
+    hits = conventor_xz(event, ind)    
 
+    
     for track_id in tracks:
 
         intersecting_hits = {}
@@ -638,6 +638,8 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
                     tmp[hit_index] = x
                     intersecting_hits.setdefault(z, []).append(hit_index)
                     n += 1
+                    
+        indicator = 0
 
         if (n >= n_min):
             
@@ -651,7 +653,7 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
 
                             for j in intersecting_hits[end_z]:
 
-                                if ((not hits[start_z][i].used) & (not hits[end_z][j].used)):
+                                if ((not hits[start_z][i].used) & (not hits[end_z][j].used) & (indicator == 0)):
 
                                     new_k, new_b = get_plane((hits[start_z][i].x, start_z), (hits[end_z][j].x, end_z))
 
