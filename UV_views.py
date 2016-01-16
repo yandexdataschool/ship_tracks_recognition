@@ -582,8 +582,6 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
             key = id of track, value = array of indexes of his hits.
     """
 
-    hits = conventor_xz(event, ind)
-
     new_linking_table = {}
     new_tracks = {}
 
@@ -612,7 +610,9 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
         event = modify_for_xz_analysis_1_2(event)
 
 
+    hits = conventor_xz(event, ind)    
 
+    
     for track_id in tracks:
 
         intersecting_hits = {}
