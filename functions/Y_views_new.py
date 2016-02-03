@@ -362,13 +362,15 @@ def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf,
     else:
 
         lin_regr = np.polyfit(Z, Y, 1, w = weights)
-        dists = []
+        dists_0 = []
+        dists_1 = []
         
         for j in crossing_points:
             
-            dists.append(dist2Track((event.Wz[j], event.Wy[j]), lin_regr)/event.dist2Wire[j])
+            dists_0.append(dist2Track((event.Wz[j], event.Wy[j]), lin_regr)/event.dist2Wire[j])
+            dists_1.append(np.abs(dist2Track((event.Wz[j], event.Wy[j]), lin_regr)-event.dist2Wire[j]))
 
-        if clf.predict([n, np.max(dists), np.min(dists), np.average(dists)])[0]==0:
+        if clf.predict([n, np.max(dists_0), np.min(dists_0), np.average(dists_0), np.max(dists_1), np.min(dists_1), np.average(dists_1)])[0]==0:
             
             return 0, crossing_points, [0., 0.]
         
