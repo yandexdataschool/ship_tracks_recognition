@@ -2,6 +2,7 @@ __author__ = 'Alenkin Oleg, Mikhail Hushchyn'
 
 import numpy as np
 import pandas as pd
+from MarginLinearRegression import *
 from math import *
 
 
@@ -298,7 +299,7 @@ def conventor_yz(event, indicator):
 
 
 
-def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
+def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min, regr_type):
     """
     Counts the number of points which intercept line with parametres: plane_k, plane_b, plane_width.
     If the result more than n_min than makes linnear regression on this points.
@@ -320,6 +321,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
     crossing_points = []
     Y = [] # for linear regression
     Z = []
+    R = []
     weights = []
     n = 0 # number of touched layers
 
@@ -339,6 +341,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
                 crossing_points.append(hits[z][j].index)
                 Z.append(z)
                 Y.append(hits[z][j].y)
+                R.append(hits[z][j].dist2Wire)
                 weights.append(1 / (hits[z][j].dist2Wire)**(0.5))
                 marks[z].append(j)
                 indicator = True
@@ -354,7 +357,15 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min):
 
     else:
 
-        lin_regr = np.polyfit(Z, Y, 1, w = weights)
+        if regr_type==0:
+            lin_regr = np.polyfit(Z, Y, 1, w=weights)
+        else:
+            mlr = MarginLinearRegression(n_iter=2)
+            R = np.array(R).reshape(-1, 1)
+            Z = np.array(Z).reshape(-1, 1)
+            Y = np.array(Y).reshape(-1, 1)
+            mlr.fit(Z, Y, R, R)
+            lin_regr = [mlr.regressor.coef_[0, 0], mlr.regressor.intercept_[0]]
 
         for z in hits:
 
@@ -376,7 +387,7 @@ def crossing_lines(k1, b1, k2, b2):
     return (y, z)
 
 
-def loop_yz(event, n_min, plane_width, ind):
+def loop_yz(event, n_min, plane_width, ind, regr_type):
     """
     Finds all possible candidates for being tracks in 2d-space (z, y). Algorithm uses only hits from Y-views. For all 
     hits in the first plane and for all hits in the last plane it constructs lines using all possible pairs 
@@ -426,7 +437,7 @@ def loop_yz(event, n_min, plane_width, ind):
 
                             k, b = get_plane((i.y, start_z), (j.y, end_z))
 
-                            indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n)
+                            indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n, regr_type)
 
                             if indicator == 1:
                                 tracks[trackID] = lin_regr

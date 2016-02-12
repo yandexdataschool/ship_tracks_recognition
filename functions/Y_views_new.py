@@ -365,12 +365,12 @@ def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf,
     else:
 
         if regr_type==0:
-            lin_regr = np.polyfit(Z, Y, 1, w = weights)
+            lin_regr = np.polyfit(Z, Y, 1, w=weights)
         else:
             mlr = MarginLinearRegression(n_iter=2)
-            R = np.array(R).reshape(len(R), 1)
-            Z = np.array(Z).reshape(len(Z), 1)
-            Y = np.array(Y).reshape(len(Y), 1)
+            R = np.array(R).reshape(-1, 1)
+            Z = np.array(Z).reshape(-1, 1)
+            Y = np.array(Y).reshape(-1, 1)
             mlr.fit(Z, Y, R, R)
             lin_regr = [mlr.regressor.coef_[0, 0], mlr.regressor.intercept_[0]]
         dists_0 = []
@@ -457,9 +457,9 @@ def loop_yz_new(event, n_min, plane_width, ind, clf, regr_type):
                         if ((not i.used) & (not j.used)):
 
                             k, b = get_plane((i.y, start_z), (j.y, end_z))
-
+                            
                             indicator, crossing_points, lin_regr = points_crossing_line_yz_new(k, b, plane_width, hits, n, clf, event, regr_type)
-
+                            
                             if indicator == 1:
                                 tracks[trackID] = lin_regr
                                 linking_table[trackID] = crossing_points
