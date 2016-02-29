@@ -375,7 +375,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min, regr_typ
         else:
 
             model_ransac = linear_model.RANSACRegressor(linear_model.LinearRegression())
-            model_ransac.fit(np.array(Z).reshape(-1, 1), np.array(Y).reshape(-1, 1))
+            model_ransac.fit(np.array(Z).reshape(-1, 1), np.array(Y).reshape(-1, 1), )
             inlier_mask = model_ransac.inlier_mask_
             outlier_mask = np.logical_not(inlier_mask)
             lin_regr = np.polyfit(list(itertools.compress(Z, inlier_mask)),\
