@@ -305,7 +305,7 @@ def dist2Track(point, track):
 
 
 
-def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf, event, regr_type):
+def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf_y, clf_stereo, event, regr_type, event2):
     """
     Counts the number of points which intercept line with parametres: plane_k, plane_b, plane_width.
     If the result more than n_min than makes linnear regression on this points.
@@ -356,7 +356,8 @@ def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf,
             n += 1
 
     rmlr = RobustMarginLinearRegression(n_iter=2)
-    score, lr, track = rmlr.turbo_fit(event.loc[crossing_points], clf, 0.0002)
+    #score, lr, track = rmlr.turbo_fit(event.loc[crossing_points], clf, event2, 0.0)
+    score, lr, track = turbo_fit(event.loc[crossing_points], event2, clf_y, view='Y')
     crossing_points = track.index
     n = len(track)
 
@@ -368,7 +369,7 @@ def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf,
 
     else:
 
-        lin_regr = [lr.k[0, 0], lr.k[1,0]]
+        lin_regr = [lr.coef_[0], lr.intercept_]
             
         for z in hits:
 
@@ -390,7 +391,7 @@ def crossing_lines(k1, b1, k2, b2):
 
 
 
-def loop_yz_new(event, n_min, plane_width, ind, clf, regr_type):
+def loop_yz_new(event, n_min, plane_width, ind, clf_y, clf_stereo, regr_type, event2):
     """
     Finds all possible candidates for being tracks in 2d-space (z, y). Algorithm uses only hits from Y-views. For all 
     hits in the first plane and for all hits in the last plane it constructs lines using all possible pairs 
@@ -441,8 +442,9 @@ def loop_yz_new(event, n_min, plane_width, ind, clf, regr_type):
                         if ((not i.used) & (not j.used)):
 
                             k, b = get_plane((i.y, start_z), (j.y, end_z))
+                            #print k, b
                             
-                            indicator, crossing_points, lin_regr = points_crossing_line_yz_new(k, b, plane_width, hits, n, clf, event, regr_type)
+                            indicator, crossing_points, lin_regr = points_crossing_line_yz_new(k, b, plane_width, hits, n_min, clf_y, clf_stereo, event, regr_type, event2)
                             
                             if indicator == 1:
                                 tracks[trackID] = lin_regr
