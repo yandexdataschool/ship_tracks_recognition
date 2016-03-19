@@ -42,7 +42,7 @@ def one_event_efficiency(events, reco_events):
     # Efficiency for the station.
     for track in linking_table_xz:
 
-        track_hits = linking_table_xz[track] + linking_table_yz[track // 10000]
+        track_hits = list(linking_table_xz[track]) + list(linking_table_yz[track // 10000])
         true_track_ids = events.loc[track_hits].TrackID.values
 
         _, unique_ids_counts = np.unique(true_track_ids, return_counts=True)
@@ -53,7 +53,7 @@ def one_event_efficiency(events, reco_events):
     return efficiencies_y, efficiencies_uv, efficiencies
 
 
-def efficiency(event_ids, all_hits, reco_events):
+def efficiency_per_track(event_ids, all_hits, reco_events):
     """
     Get efficiencies.
     :param list event_ids: list of event numbers.
@@ -79,3 +79,141 @@ def efficiency(event_ids, all_hits, reco_events):
         all_eff_station += eff_station
 
     return all_eff_y, all_eff_stereo, all_eff_station
+
+
+def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, match_tracks, true_pdg_dict):
+    """
+    Efficiencies per event after each stage of the tracks pattern recognition.
+    :param reconstructible_events: dictionary of the reconstructed events.
+                               Key - event number,
+                               value - list of tracks ids.
+    :param reco_events12: dictionary of the reconstructed tracks before the magnet.
+                               Key - event number,
+                               value - [tracks_yz, linking_table_yz, tracks_xz, linking_table_xz].
+    :param reco_events34: dictionary of the reconstructed tracks after the magnet.
+                               Key - event number,
+                               value - [tracks_yz, linking_table_yz, tracks_xz, linking_table_xz].
+    :param match_tracks: dictionary of the combined tracks before and after the magnet.
+                               Key - event number,
+                               value - [[track_id_12_stations, track_id_34_stations], track_id_12_stations, track_id_34_stations], ...].
+    :param true_pdg_dict: dictionary of pdg codes of the tracks, where key - event number,
+                            value - list of the true pdg codes before and after the magnet;
+    :return: list of efficiencies per event after each stage.
+    """
+
+    n_reco_events = len(reconstructible_events.keys())
+
+    n_events_y_12 = 0
+    n_events_stereo_12 = 0
+    n_events_station_12 = 0
+
+    n_events_y_34 = 0
+    n_events_stereo_34 = 0
+    n_events_station_34 = 0
+
+    n_events_combined_12_34 = 0
+    n_events_matched = 0
+
+
+    passed_event_ids = []
+
+    # y_12
+    for event_id in reconstructible_events.keys():
+
+        tracks_y = reco_events12[event_id][0]
+
+        if len(tracks_y) > 1:
+            n_events_y_12 += 1.
+            passed_event_ids.append(event_id)
+
+    # stereo_12
+    reco_events = passed_event_ids
+    passed_event_ids = []
+
+    for event_id in reco_events:
+
+        tracks_stsreo = reco_events12[event_id][2]
+
+        if len(tracks_stsreo) > 1:
+            n_events_stereo_12 += 1.
+            passed_event_ids.append(event_id)
+
+    # station_12
+    n_events_station_12 = n_events_stereo_12
+
+    # y_34
+    reco_events = passed_event_ids
+    passed_event_ids = []
+
+    for event_id in reco_events:
+
+        tracks_stsreo = reco_events34[event_id][0]
+
+        if len(tracks_stsreo) > 1:
+            n_events_y_34 += 1.
+            passed_event_ids.append(event_id)
+
+    # stereo_34
+    reco_events = passed_event_ids
+    passed_event_ids = []
+
+    for event_id in reco_events:
+
+        tracks_stsreo = reco_events34[event_id][2]
+
+        if len(tracks_stsreo) > 1:
+            n_events_stereo_34 += 1.
+            passed_event_ids.append(event_id)
+
+    # station_34
+    n_events_station_34 = n_events_stereo_34
+
+
+    # combine 1&2/3&4
+    reco_events = passed_event_ids
+    passed_event_ids = []
+
+    for event_id in reco_events:
+
+        track_comb = match_tracks[event_id]
+
+        if len(track_comb) > 1:
+            n_events_combined_12_34 += 1
+            passed_event_ids.append(event_id)
+
+
+    # matched
+    reco_events = passed_event_ids
+    passed_event_ids = []
+
+    for event_id in reco_events:
+
+        pdg_event = true_pdg_dict[event_id]
+
+        n_mismatched = 0
+        for pdg_track in pdg_event:
+
+            if pdg_track[0] != pdg_track[1]:
+
+                n_mismatched += 1
+
+
+        if n_mismatched == 0:
+            n_events_matched += 1
+            passed_event_ids.append(event_id)
+
+
+
+    n_events = [n_reco_events,
+            n_events_y_12,
+            n_events_stereo_12,
+            n_events_station_12,
+            n_events_y_34,
+            n_events_stereo_34,
+            n_events_station_34,
+            n_events_combined_12_34,
+            n_events_matched]
+
+    n_events = np.array(n_events)
+
+    return n_events
