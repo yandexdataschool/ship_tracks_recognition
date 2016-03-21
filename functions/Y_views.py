@@ -444,7 +444,7 @@ def loop_yz(event, n_min, plane_width, ind, regr_type):
                                 linking_table[trackID] = crossing_points
                                 trackID += 1
 
-    return remove_unnecessary_yz(tracks, linking_table)
+    return tracks, linking_table
 
 
 

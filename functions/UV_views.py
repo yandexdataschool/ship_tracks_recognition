@@ -582,7 +582,7 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
             key = id of track, value = array of indexes of his hits.
     """
 
-    hits = conventor_xz(event, ind)
+    #hits = conventor_xz(event, ind)
 
     new_linking_table = {}
     new_tracks = {}
@@ -615,6 +615,8 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
 
     for track_id in tracks:
 
+        hits = conventor_xz(event, ind) #!!!!!!!!!!
+
         intersecting_hits = {}
         n = 0
 
@@ -632,7 +634,7 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
 
                 x = hits_xz.loc[[hit_index]].Wx.values[0]
 
-                if ((x > -250) & (x < 250) & (not hits[z][hit_index].used)):
+                if ((x > -300) & (x < 300) & (not hits[z][hit_index].used)):
 
                     hits[z][hit_index].x = x
                     tmp[hit_index] = x

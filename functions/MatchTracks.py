@@ -95,7 +95,7 @@ def get_matched_tracks(reco_events12, reco_events34):
     pinv_dict = {}
 
     Bm = -0.75
-    zmagnet = 3018.
+    zmagnet = 3070.
 
     for event_id in reco_events12.keys():
 
@@ -221,13 +221,13 @@ def get_true_match(reco_events12, reco_events34, match_tracks, all_hits):
 
             [track12_ids, track34_ids] = track
 
-            [track12_yz_id, track12_xz_id] = [track12_ids % 10000, track12_ids]
+            [track12_yz_id, track12_xz_id] = [track12_ids // 10000, track12_ids]
             hits12_yz_ids = list(reco_events12[event_id][1][track12_yz_id])
             hits12_xz_ids = list(reco_events12[event_id][3][track12_xz_id])
             hits12_ids = hits12_yz_ids + hits12_xz_ids
             hits12 = all_hits.loc[hits12_ids]
 
-            [track34_yz_id, track34_xz_id] = [track34_ids % 10000, track34_ids]
+            [track34_yz_id, track34_xz_id] = [track34_ids // 10000, track34_ids]
             hits34_yz_ids = list(reco_events34[event_id][1][track34_yz_id])
             hits34_xz_ids = list(reco_events34[event_id][3][track34_xz_id])
             hits34_ids = hits34_yz_ids + hits34_xz_ids
