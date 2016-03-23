@@ -500,7 +500,7 @@ def get_xz(plane_k, plane_b, event):
 
     return intercect_hits
 
-def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
+def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min, clf):
     """
     Counts the number of points which intercept line with parametres: plane_k, plane_b, plane_width.
     If the result more than n_min than makes linnear regression on this points.
@@ -522,6 +522,7 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
     crossing_points = []
     X = [] # for linear regression
     Z = []
+    weights = []
     n = 0 # number of touched layers
     marks = {}
 
@@ -541,6 +542,9 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
                 crossing_points.append(j)
                 Z.append(z)
                 X.append(hits[z][j].x)
+                Rz = hits[z][j].dist2Wire
+                Rx = Rz / np.sin(5. * np.pi / 180.)
+                weights.append(np.sqrt((1./Rx)**2 + (1./Rz)**2))
                 marks[z].append(j)
                 indicator = True
 
@@ -554,17 +558,39 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
 
     else:
 
-        lin_regr = np.polyfit(Z, X, 1)
+        lin_regr = np.polyfit(Z, X, 1, w=weights)
+        
+        k = lin_regr[0]
+        b = lin_regr[1]
+        
+        Z = np.array(Z)
+        X = np.array(X)
+        Rx = np.array(Rx)
+        Rz = np.array(Rz)
+        
+        Sign = (1. * (X > k * Z + b) - 0.5) * 2.
+        Z_new = Z + Sign * Rz * k/np.sqrt(1 + k**2)
+        X_new = X - Sign * Rx * 1./np.sqrt(1 + k**2)
 
-        for z in marks:
+        dists = np.abs(k * Z_new + b - X_new)/np.sqrt(k**2 + 1.0)
+        
+        params = [np.min(dists), np.max(dists), np.std(dists), np.mean(dists), k, b, len(dists)]
+        
+        if clf.predict_proba(params)[0, 0] > 0.5:
+            
+            return 0, crossing_points, [0., 0.]
+        
+        else:
 
-            for i in marks[z]:
+            for z in marks:
 
-                hits[z][i].used = True
+                for i in marks[z]:
 
-        return 1, crossing_points, lin_regr
+                    hits[z][i].used = True
 
-def loop_xz(event, tracks, linking_table, n_min, width, ind):
+            return 1, crossing_points, lin_regr
+
+def loop_xz(event, tracks, linking_table, n_min, width, ind, clf):
     """
     Gets tracks and linking_table received from previous stage Y-views analysis. Fetches only tracks which intersect 
     more than n_min hits in 2d-space (z, x). Every track may be rejected or give 1 and more tracks in 2d-space (z, x).
@@ -582,7 +608,7 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
             key = id of track, value = array of indexes of his hits.
     """
 
-    hits = conventor_xz(event, ind)
+    #hits = conventor_xz(event, ind)
 
     new_linking_table = {}
     new_tracks = {}
@@ -615,6 +641,8 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
 
     for track_id in tracks:
 
+        hits = conventor_xz(event, ind) #!!!!!!!!!!
+
         intersecting_hits = {}
         n = 0
 
@@ -632,7 +660,7 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
 
                 x = hits_xz.loc[[hit_index]].Wx.values[0]
 
-                if ((x > -250) & (x < 250) & (not hits[z][hit_index].used)):
+                if ((x > -300) & (x < 300) & (not hits[z][hit_index].used)):
 
                     hits[z][hit_index].x = x
                     tmp[hit_index] = x
@@ -656,7 +684,7 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
                                     new_k, new_b = get_plane((hits[start_z][i].x, start_z), (hits[end_z][j].x, end_z))
 
                                     indicator, crossing_points, lin_regr = \
-                                        points_crossing_line_xz(new_k, new_b, width, hits, intersecting_hits, m)
+                                        points_crossing_line_xz(new_k, new_b, width, hits, intersecting_hits, m, clf)
 
                                     if indicator == 1:
 

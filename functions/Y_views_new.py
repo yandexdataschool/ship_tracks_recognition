@@ -306,7 +306,7 @@ def dist2Track(point, track):
 
 
 
-def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf, event, regr_type):
+def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf, event):
     """
     Counts the number of points which intercept line with parametres: plane_k, plane_b, plane_width.
     If the result more than n_min than makes linnear regression on this points.
@@ -348,7 +348,7 @@ def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf,
                 crossing_points.append(hits[z][j].index)
                 Z.append(z)
                 Y.append(hits[z][j].y)
-                weights.append(1 / (hits[z][j].dist2Wire)**(0.5))
+                weights.append(1. / (hits[z][j].dist2Wire) * np.sqrt(2))
                 marks[z].append(j)
                 R.append(hits[z][j].dist2Wire)
                 indicator = True
@@ -364,24 +364,24 @@ def points_crossing_line_yz_new(plane_k, plane_b, plane_width, hits, n_min, clf,
 
     else:
 
-        if regr_type==0:
-            lin_regr = np.polyfit(Z, Y, 1, w=weights)
-        else:
-            mlr = MarginLinearRegression(n_iter=2)
-            R = np.array(R).reshape(-1, 1)
-            Z = np.array(Z).reshape(-1, 1)
-            Y = np.array(Y).reshape(-1, 1)
-            mlr.fit(Z, Y, R, R)
-            lin_regr = [mlr.regressor.coef_[0, 0], mlr.regressor.intercept_[0]]
-        dists_0 = []
-        dists_1 = []
+        lin_regr = np.polyfit(Z, Y, 1, w=weights)
         
-        for j in crossing_points:
-            
-            dists_0.append(dist2Track((event.Wz[j], event.Wy[j]), lin_regr)/event.dist2Wire[j])
-            dists_1.append(np.abs(dist2Track((event.Wz[j], event.Wy[j]), lin_regr)-event.dist2Wire[j]))
+        k = lin_regr[0]
+        b = lin_regr[1]
+        
+        Z = np.array(Z)
+        Y = np.array(Y)
+        R = np.array(R)
+        
+        Sign = (1. * (Y > k * Z + b) - 0.5) * 2.
+        Z_new = Z + Sign * R * k/numpy.sqrt(1 + k**2)
+        Y_new = Y - Sign * R * 1./numpy.sqrt(1 + k**2)
 
-        if clf.predict([n, np.max(dists_0), np.min(dists_0), np.average(dists_0), np.max(dists_1), np.min(dists_1), np.average(dists_1)])[0]==0:
+        dists = numpy.abs(k * Z_new + b - Y_new)/numpy.sqrt(k**2 + 1.0)
+        
+        params = [np.min(dists), np.max(dists), np.std(dists), np.mean(dists), k, b, len(dists)]
+
+        if clf.predict_proba(params)[0, 0] > 0.5:
             
             return 0, crossing_points, [0., 0.]
         
@@ -406,7 +406,7 @@ def crossing_lines(k1, b1, k2, b2):
 
 
 
-def loop_yz_new(event, n_min, plane_width, ind, clf, regr_type):
+def loop_yz_new(event, n_min, plane_width, ind, clf):
     """
     Finds all possible candidates for being tracks in 2d-space (z, y). Algorithm uses only hits from Y-views. For all 
     hits in the first plane and for all hits in the last plane it constructs lines using all possible pairs 
@@ -458,14 +458,14 @@ def loop_yz_new(event, n_min, plane_width, ind, clf, regr_type):
 
                             k, b = get_plane((i.y, start_z), (j.y, end_z))
                             
-                            indicator, crossing_points, lin_regr = points_crossing_line_yz_new(k, b, plane_width, hits, n, clf, event, regr_type)
+                            indicator, crossing_points, lin_regr = points_crossing_line_yz_new(k, b, plane_width, hits, n, clf, event)
                             
                             if indicator == 1:
                                 tracks[trackID] = lin_regr
                                 linking_table[trackID] = crossing_points
                                 trackID += 1
 
-    return remove_unnecessary_yz(tracks, linking_table)
+    return tracks, linking_table
 
 
 
