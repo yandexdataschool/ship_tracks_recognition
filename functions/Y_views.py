@@ -151,7 +151,24 @@ def modify_for_yz_analysis_1_2(event):
               layer2000, layer2001, layer2010, layer2011,
               layer2300, layer2301, layer2310, layer2311]
 
-    return pd.concat(layers, axis=0)
+    zlayers = {0: z1000,
+               1: z1001,
+               2: z1010,
+               3: z1011,
+               4: z1300,
+               5: z1301,
+               6: z1310,
+               7: z1311,
+               8: z2000,
+               9: z2001,
+               10: z2010,
+               11: z2011,
+               12: z2300,
+               13: z2301,
+               14: z2310,
+               15: z2311}
+
+    return pd.concat(layers, axis=0), zlayers
 
 def modify_for_yz_analysis_3_4(event):
     """
@@ -262,7 +279,24 @@ def modify_for_yz_analysis_3_4(event):
               layer4000, layer4001, layer4010, layer4011,
               layer4300, layer4301, layer4310, layer4311]
 
-    return pd.concat(layers, axis=0)
+    zlayers = {0: z3000,
+               1: z3001,
+               2: z3010,
+               3: z3011,
+               4: z3300,
+               5: z3301,
+               6: z3310,
+               7: z3311,
+               8: z4000,
+               9: z4001,
+               10: z4010,
+               11: z4011,
+               12: z4300,
+               13: z4301,
+               14: z4310,
+               15: z4311}
+
+    return pd.concat(layers, axis=0), zlayers
 
 
 
@@ -279,11 +313,11 @@ def conventor_yz(event, indicator):
 
     if (indicator):
 
-        event = modify_for_yz_analysis_3_4(event)
+        event, zlayers = modify_for_yz_analysis_3_4(event)
 
     else:
 
-        event = modify_for_yz_analysis_1_2(event)
+        event, zlayers = modify_for_yz_analysis_1_2(event)
 
 
 
@@ -295,7 +329,7 @@ def conventor_yz(event, indicator):
         dictionary.setdefault(event.Wz[i], []).append(params)
 
 
-    return dictionary
+    return dictionary, zlayers
 
 
 
@@ -405,44 +439,46 @@ def loop_yz(event, n_min, plane_width, ind, regr_type):
             key = id of track, value = array of indexes of his hits.
     """
 
-    hits = conventor_yz(event, ind) # dictionary with hits: key = z; value = array of objects with fields(y, dist2Wire, index)
-
-
-    if (ind):
-
-        start_zs = [3321.15, 3322.25]
-        end_zs = [3553.75, 3554.85]
-
-    else:
-
-        start_zs = [2581.15, 2582.25]
-        end_zs = [2813.75, 2814.85]
-
+    hits, zlayers = conventor_yz(event, ind) # dictionary with hits: key = z; value = array of objects with fields(y, dist2Wire, index)
+    layers = zlayers.keys()
+    layers.sort()
+    ndrop = len(layers) - n_min
 
     tracks = {} #finded tracks: key = id of recognized track; value = (k, p)
     linking_table = {} # key = id of recognized track; value = array of hit ID's from the main table
     trackID = 1
 
     for n in range(16, n_min - 1, -1):
-    
-        for start_z in (set(start_zs) & set(hits.keys())):
 
-            for i in hits[start_z]:
+        for idrop in range(ndrop):
 
-                for end_z in (set(end_zs) & set(hits.keys())):
+            if n > 16 - idrop:
+                continue
 
-                    for j in hits[end_z]:
-                        
-                        if ((not i.used) & (not j.used)):
+            for drop_iter in range(idrop + 1):
 
-                            k, b = get_plane((i.y, start_z), (j.y, end_z))
+                start_ind = layers[0] + drop_iter
+                start_z = zlayers[start_ind]
 
-                            indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n, regr_type)
+                end_ind = layers[-1] - (idrop - drop_iter)
+                end_z = zlayers[end_ind]
 
-                            if indicator == 1:
-                                tracks[trackID] = lin_regr
-                                linking_table[trackID] = crossing_points
-                                trackID += 1
+                if hits.has_key(start_z) and hits.has_key(end_z):
+
+                    for i in hits[start_z]:
+
+                        for j in hits[end_z]:
+
+                            if ((not i.used) & (not j.used)):
+
+                                k, b = get_plane((i.y, start_z), (j.y, end_z))
+
+                                indicator, crossing_points, lin_regr = points_crossing_line_yz(k, b, plane_width, hits, n, regr_type)
+
+                                if indicator == 1:
+                                    tracks[trackID] = lin_regr
+                                    linking_table[trackID] = crossing_points
+                                    trackID += 1
 
     return tracks, linking_table
 

@@ -250,7 +250,24 @@ def modify_for_xz_analysis_1_2(event):
               layer2100, layer2101, layer2110, layer2111,
               layer2200, layer2201, layer2210, layer2211]
 
-    return pd.concat(layers, axis=0)
+    zlayers = {0: z1100,
+               1: z1101,
+               2: z1110,
+               3: z1111,
+               4: z1200,
+               5: z1201,
+               6: z1210,
+               7: z1211,
+               8: z2100,
+               9: z2101,
+               10: z2110,
+               11: z2111,
+               12: z2200,
+               13: z2201,
+               14: z2210,
+               15: z2211}
+
+    return pd.concat(layers, axis=0), zlayers
 
 def modify_for_xz_analysis_3_4(event):
     """
@@ -460,7 +477,24 @@ def modify_for_xz_analysis_3_4(event):
               layer4100, layer4101, layer4110, layer4111,
               layer4200, layer4201, layer4210, layer4211]
 
-    return pd.concat(layers, axis=0)
+    zlayers = {0: z3100,
+               1: z3101,
+               2: z3110,
+               3: z3111,
+               4: z3200,
+               5: z3201,
+               6: z3210,
+               7: z3211,
+               8: z4100,
+               9: z4101,
+               10: z4110,
+               11: z4111,
+               12: z4200,
+               13: z4201,
+               14: z4210,
+               15: z4211}
+
+    return pd.concat(layers, axis=0), zlayers
 
 def conventor_xz(event, indicator):
     """
@@ -475,11 +509,11 @@ def conventor_xz(event, indicator):
 
     if (indicator):
 
-        event = modify_for_xz_analysis_3_4(event)
+        event, zlayers = modify_for_xz_analysis_3_4(event)
 
     else:
 
-        event = modify_for_xz_analysis_1_2(event)
+        event, zlayers = modify_for_xz_analysis_1_2(event)
 
 
     dictionary = {}
@@ -489,7 +523,7 @@ def conventor_xz(event, indicator):
         params = parametresXZ(event.Wu[i], event.dist2Wire[i], (event.ViewNb[i] - 1.5) * 2 * np.pi / 36, 50000, False)
         dictionary.setdefault(event.Wz[i], {})[i] = params
 
-    return dictionary
+    return dictionary, zlayers
 
 def get_xz(plane_k, plane_b, event):
 
@@ -605,17 +639,20 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
 
     if (ind):
 
-        event = modify_for_xz_analysis_3_4(event)
+        event, zlayers = modify_for_xz_analysis_3_4(event)
 
     else:
 
-        event = modify_for_xz_analysis_1_2(event)
+        event, zlayers = modify_for_xz_analysis_1_2(event)
 
 
 
     for track_id in tracks:
 
-        hits = conventor_xz(event, ind) #!!!!!!!!!!
+        hits, zlayers = conventor_xz(event, ind) #!!!!!!!!!!
+        layers = zlayers.keys()
+        layers.sort()
+        ndrop = len(layers) - n_min
 
         intersecting_hits = {}
         n = 0
@@ -642,33 +679,44 @@ def loop_xz(event, tracks, linking_table, n_min, width, ind):
                     n += 1
 
         if (n >= n_min):
-            
+
             for m in range(16, n_min - 1, -1):
 
-                for start_z in (set(start_zs) & set(intersecting_hits)):
+                for idrop in range(ndrop):
 
-                    for i in intersecting_hits[start_z]:
+                    if m > 16 - idrop:
+                        continue
 
-                        for end_z in (set(end_zs) & set(intersecting_hits)):
+                    for drop_iter in range(idrop + 1):
 
-                            for j in intersecting_hits[end_z]:
+                        start_ind = layers[0] + drop_iter
+                        start_z = zlayers[start_ind]
 
-                                if ((not hits[start_z][i].used) & (not hits[end_z][j].used)):
+                        end_ind = layers[-1] - (idrop - drop_iter)
+                        end_z = zlayers[end_ind]
 
-                                    new_k, new_b = get_plane((hits[start_z][i].x, start_z), (hits[end_z][j].x, end_z))
+                        if intersecting_hits.has_key(start_z) and intersecting_hits.has_key(end_z):
 
-                                    indicator, crossing_points, lin_regr = \
-                                        points_crossing_line_xz(new_k, new_b, width, hits, intersecting_hits, m)
+                            for i in intersecting_hits[start_z]:
 
-                                    if indicator == 1:
+                                for j in intersecting_hits[end_z]:
 
-                                        new_tracks[track_id * 10000 + new_trackID] = lin_regr
-                                        new_linking_table[track_id * 10000 + new_trackID] = crossing_points
+                                    if ((not hits[start_z][i].used) & (not hits[end_z][j].used)):
 
-                                        for k in crossing_points:
-                                            x_coordinates[k] = tmp[k]
+                                        new_k, new_b = get_plane((hits[start_z][i].x, start_z), (hits[end_z][j].x, end_z))
 
-                                        new_trackID += 1
+                                        indicator, crossing_points, lin_regr = \
+                                            points_crossing_line_xz(new_k, new_b, width, hits, intersecting_hits, m)
+
+                                        if indicator == 1:
+
+                                            new_tracks[track_id * 10000 + new_trackID] = lin_regr
+                                            new_linking_table[track_id * 10000 + new_trackID] = crossing_points
+
+                                            for k in crossing_points:
+                                                x_coordinates[k] = tmp[k]
+
+                                            new_trackID += 1
 
 
     return new_tracks, new_linking_table, x_coordinates
