@@ -2,7 +2,7 @@ __author__ = 'Alenkin Oleg, Mikhail Hushchyn'
 
 import numpy as np
 import pandas as pd
-from MarginLinearRegression import *
+from MultiLinearRegression import *
 from math import *
 
 
@@ -76,99 +76,117 @@ def modify_for_yz_analysis_1_2(event):
     layer2301 = selector(event, 2, 3, 0, 1)
     layer2310 = selector(event, 2, 3, 1, 0)
     layer2311 = selector(event, 2, 3, 1, 1)
-    
+
 
     #1-y1
     z1000 = 2598. - 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer1000.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer1000.StrawNb.values-1)) + 499 + 0.44
-    layer1000.loc[:, 'Wz'] = np.ones(layer1000.shape[0])*z1000
+    layer1000_wy = -(0.5*0.9828 + 1.76*(layer1000.StrawNb.values-1)) + 499 + 0.44
+    layer1000_wz = np.ones(layer1000.shape[0])*z1000
 
     z1001 = z1000 + 1.1
-    layer1001.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer1001.StrawNb.values-1)) + 499 + 0.44
-    layer1001.loc[:, 'Wz'] = np.ones(layer1001.shape[0])*z1001
+    layer1001_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer1001.StrawNb.values-1)) + 499 + 0.44
+    layer1001_wz = np.ones(layer1001.shape[0])*z1001
 
     z1010 = z1000 + 2.6
-    layer1010.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer1010.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer1010.loc[:, 'Wz'] = np.ones(layer1010.shape[0])*z1010
+    layer1010_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer1010.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer1010_wz = np.ones(layer1010.shape[0])*z1010
 
     z1011 = z1010 + 1.1
-    layer1011.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1011.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer1011.loc[:, 'Wz'] = np.ones(layer1011.shape[0])*z1011
+    layer1011_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1011.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer1011_wz = np.ones(layer1011.shape[0])*z1011
 
     #1-y2
     z1300 = 2598. + 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer1300.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer1300.StrawNb.values-1)) + 499 + 0.44
-    layer1300.loc[:, 'Wz'] = np.ones(layer1300.shape[0])*z1300
+    layer1300_wy = -(0.5*0.9828 + 1.76*(layer1300.StrawNb.values-1)) + 499 + 0.44
+    layer1300_wz = np.ones(layer1300.shape[0])*z1300
 
     z1301 = z1300 + 1.1
-    layer1301.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer1301.StrawNb.values-1)) + 499 + 0.44
-    layer1301.loc[:, 'Wz'] = np.ones(layer1301.shape[0])*z1301
+    layer1301_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer1301.StrawNb.values-1)) + 499 + 0.44
+    layer1301_wz = np.ones(layer1301.shape[0])*z1301
 
     z1310 = z1300 + 2.6
-    layer1310.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer1310.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer1310.loc[:, 'Wz'] = np.ones(layer1310.shape[0])*z1310
+    layer1310_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer1310.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer1310_wz = np.ones(layer1310.shape[0])*z1310
 
     z1311 = z1310 + 1.1
-    layer1311.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1311.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer1311.loc[:, 'Wz'] = np.ones(layer1311.shape[0])*z1311
+    layer1311_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer1311.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer1311_wz = np.ones(layer1311.shape[0])*z1311
 
     #2-y1
     z2000 = 2798. - 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer2000.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer2000.StrawNb.values-1)) + 499 + 0.44
-    layer2000.loc[:, 'Wz'] = np.ones(layer2000.shape[0])*z2000
+    layer2000_wy = -(0.5*0.9828 + 1.76*(layer2000.StrawNb.values-1)) + 499 + 0.44
+    layer2000_wz = np.ones(layer2000.shape[0])*z2000
 
     z2001 = z2000 + 1.1
-    layer2001.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer2001.StrawNb.values-1)) + 499 + 0.44
-    layer2001.loc[:, 'Wz'] = np.ones(layer2001.shape[0])*z2001
+    layer2001_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer2001.StrawNb.values-1)) + 499 + 0.44
+    layer2001_wz = np.ones(layer2001.shape[0])*z2001
 
     z2010 = z2000 + 2.6
-    layer2010.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer2010.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer2010.loc[:, 'Wz'] = np.ones(layer2010.shape[0])*z2010
+    layer2010_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer2010.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer2010_wz = np.ones(layer2010.shape[0])*z2010
 
     z2011 = z2010 + 1.1
-    layer2011.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2011.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer2011.loc[:, 'Wz'] = np.ones(layer2011.shape[0])*z2011
+    layer2011_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2011.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer2011_wz = np.ones(layer2011.shape[0])*z2011
 
     #2-y2
     z2300 = 2798. + 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer2300.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer2300.StrawNb.values-1)) + 499 + 0.44
-    layer2300.loc[:, 'Wz'] = np.ones(layer2300.shape[0])*z2300
+    layer2300_wy = -(0.5*0.9828 + 1.76*(layer2300.StrawNb.values-1)) + 499 + 0.44
+    layer2300_wz = np.ones(layer2300.shape[0])*z2300
 
     z2301 = z2300 + 1.1
-    layer2301.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer2301.StrawNb.values-1)) + 499 + 0.44
-    layer2301.loc[:, 'Wz'] = np.ones(layer2301.shape[0])*z2301
+    layer2301_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer2301.StrawNb.values-1)) + 499 + 0.44
+    layer2301_wz = np.ones(layer2301.shape[0])*z2301
 
     z2310 = z2300 + 2.6
-    layer2310.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer2310.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer2310.loc[:, 'Wz'] = np.ones(layer2310.shape[0])*z2310
+    layer2310_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer2310.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer2310_wz = np.ones(layer2310.shape[0])*z2310
 
     z2311 = z2310 + 1.1
-    layer2311.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2311.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer2311.loc[:, 'Wz'] = np.ones(layer2311.shape[0])*z2311
-    
-    layers = [layer1000, layer1001, layer1010, layer1011,
-              layer1300, layer1301, layer1310, layer1311,
-              layer2000, layer2001, layer2010, layer2011,
+    layer2311_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer2311.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer2311_wz = np.ones(layer2311.shape[0])*z2311
+
+
+    layers = [layer1000, layer1001, layer1010, layer1011,\
+              layer1300, layer1301, layer1310, layer1311,\
+              layer2000, layer2001, layer2010, layer2011,\
               layer2300, layer2301, layer2310, layer2311]
 
-    zlayers = {0: z1000,
-               1: z1001,
-               2: z1010,
-               3: z1011,
-               4: z1300,
-               5: z1301,
-               6: z1310,
-               7: z1311,
-               8: z2000,
-               9: z2001,
-               10: z2010,
-               11: z2011,
-               12: z2300,
-               13: z2301,
-               14: z2310,
+    layers_wy = (layer1000_wy, layer1001_wy, layer1010_wy, layer1011_wy,\
+                 layer1300_wy, layer1301_wy, layer1310_wy, layer1311_wy,\
+                 layer2000_wy, layer2001_wy, layer2010_wy, layer2011_wy,\
+                 layer2300_wy, layer2301_wy, layer2310_wy, layer2311_wy)
+    Wy = np.concatenate(layers_wy, axis=0)
+
+    layers_wz = (layer1000_wz, layer1001_wz, layer1010_wz, layer1011_wz,\
+                 layer1300_wz, layer1301_wz, layer1310_wz, layer1311_wz,\
+                 layer2000_wz, layer2001_wz, layer2010_wz, layer2011_wz,\
+                 layer2300_wz, layer2301_wz, layer2310_wz, layer2311_wz)
+    Wz = np.concatenate(layers_wz, axis=0)
+
+
+    zlayers = {0: z1000, \
+               1: z1001,\
+               2: z1010,\
+               3: z1011,\
+               4: z1300,\
+               5: z1301,\
+               6: z1310,\
+               7: z1311,\
+               8: z2000,\
+               9: z2001,\
+               10: z2010,\
+               11: z2011,\
+               12: z2300,\
+               13: z2301,\
+               14: z2310,\
                15: z2311}
 
-    return pd.concat(layers, axis=0), zlayers
+    data = pd.concat(layers, axis=0)
+    data['Wy'] = Wy
+    data['Wz'] = Wz
+
+    return data, zlayers
 
 def modify_for_yz_analysis_3_4(event):
     """
@@ -208,76 +226,88 @@ def modify_for_yz_analysis_3_4(event):
     
     #3-y1
     z3000 = 3338. - 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer3000.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer3000.StrawNb.values-1)) + 499 + 0.44
-    layer3000.loc[:, 'Wz'] = np.ones(layer3000.shape[0])*z3000
+    layer3000_wy = -(0.5*0.9828 + 1.76*(layer3000.StrawNb.values-1)) + 499 + 0.44
+    layer3000_wz = np.ones(layer3000.shape[0])*z3000
 
     z3001 = z3000 + 1.1
-    layer3001.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer3001.StrawNb.values-1)) + 499 + 0.44
-    layer3001.loc[:, 'Wz'] = np.ones(layer3001.shape[0])*z3001
+    layer3001_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer3001.StrawNb.values-1)) + 499 + 0.44
+    layer3001_wz = np.ones(layer3001.shape[0])*z3001
 
     z3010 = z3000 + 2.6
-    layer3010.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer3010.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer3010.loc[:, 'Wz'] = np.ones(layer3010.shape[0])*z3010
+    layer3010_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer3010.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3010_wz = np.ones(layer3010.shape[0])*z3010
 
     z3011 = z3010 + 1.1
-    layer3011.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer3011.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer3011.loc[:, 'Wz'] = np.ones(layer3011.shape[0])*z3011
+    layer3011_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer3011.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3011_wz = np.ones(layer3011.shape[0])*z3011
 
     #3-y2
     z3300 = 3338. + 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer3300.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer3300.StrawNb.values-1)) + 499 + 0.44
-    layer3300.loc[:, 'Wz'] = np.ones(layer3300.shape[0])*z3300
+    layer3300_wy = -(0.5*0.9828 + 1.76*(layer3300.StrawNb.values-1)) + 499 + 0.44
+    layer3300_wz = np.ones(layer3300.shape[0])*z3300
 
     z3301 = z3300 + 1.1
-    layer3301.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer3301.StrawNb.values-1)) + 499 + 0.44
-    layer3301.loc[:, 'Wz'] = np.ones(layer3301.shape[0])*z3301
+    layer3301_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer3301.StrawNb.values-1)) + 499 + 0.44
+    layer3301_wz = np.ones(layer3301.shape[0])*z3301
 
     z3310 = z3300 + 2.6
-    layer3310.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer3310.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer3310.loc[:, 'Wz'] = np.ones(layer3310.shape[0])*z3310
+    layer3310_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer3310.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3310_wz = np.ones(layer3310.shape[0])*z3310
 
     z3311 = z3310 + 1.1
-    layer3311.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer3311.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer3311.loc[:, 'Wz'] = np.ones(layer3311.shape[0])*z3311
+    layer3311_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer3311.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer3311_wz = np.ones(layer3311.shape[0])*z3311
 
     #4-y1
     z4000 = 3538. - 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer4000.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer4000.StrawNb.values-1)) + 499 + 0.44
-    layer4000.loc[:, 'Wz'] = np.ones(layer4000.shape[0])*z4000
+    layer4000_wy = -(0.5*0.9828 + 1.76*(layer4000.StrawNb.values-1)) + 499 + 0.44
+    layer4000_wz = np.ones(layer4000.shape[0])*z4000
 
     z4001 = z4000 + 1.1
-    layer4001.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer4001.StrawNb.values-1)) + 499 + 0.44
-    layer4001.loc[:, 'Wz'] = np.ones(layer4001.shape[0])*z4001
+    layer4001_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer4001.StrawNb.values-1)) + 499 + 0.44
+    layer4001_wz = np.ones(layer4001.shape[0])*z4001
 
     z4010 = z4000 + 2.6
-    layer4010.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer4010.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer4010.loc[:, 'Wz'] = np.ones(layer4010.shape[0])*z4010
+    layer4010_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer4010.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4010_wz = np.ones(layer4010.shape[0])*z4010
 
     z4011 = z4010 + 1.1
-    layer4011.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer4011.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer4011.loc[:, 'Wz'] = np.ones(layer4011.shape[0])*z4011
+    layer4011_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer4011.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4011_wz = np.ones(layer4011.shape[0])*z4011
 
     #4-y2
     z4300 = 3538. + 15. - 0.5*(2.6 - 1.1 - 0.9828) - 1.1 - 0.5*0.9828
-    layer4300.loc[:, 'Wy'] = -(0.5*0.9828 + 1.76*(layer4300.StrawNb.values-1)) + 499 + 0.44
-    layer4300.loc[:, 'Wz'] = np.ones(layer4300.shape[0])*z4300
+    layer4300_wy = -(0.5*0.9828 + 1.76*(layer4300.StrawNb.values-1)) + 499 + 0.44
+    layer4300_wz = np.ones(layer4300.shape[0])*z4300
 
     z4301 = z4300 + 1.1
-    layer4301.loc[:, 'Wy'] = -(0.5*0.9828 - 0.88 + 1.76*(layer4301.StrawNb.values-1)) + 499 + 0.44
-    layer4301.loc[:, 'Wz'] = np.ones(layer4301.shape[0])*z4301
+    layer4301_wy = -(0.5*0.9828 - 0.88 + 1.76*(layer4301.StrawNb.values-1)) + 499 + 0.44
+    layer4301_wz = np.ones(layer4301.shape[0])*z4301
 
     z4310 = z4300 + 2.6
-    layer4310.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 + 1.76*(layer4310.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer4310.loc[:, 'Wz'] = np.ones(layer4310.shape[0])*z4310
+    layer4310_wy = -(0.5*0.9828 - 0.44 + 1.76*(layer4310.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4310_wz = np.ones(layer4310.shape[0])*z4310
 
     z4311 = z4310 + 1.1
-    layer4311.loc[:, 'Wy'] = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer4311.StrawNb.values-1)) + 499 + 0.44 - 0.88
-    layer4311.loc[:, 'Wz'] = np.ones(layer4311.shape[0])*z4311
+    layer4311_wy = -(0.5*0.9828 - 0.44 - 0.88 + 1.76*(layer4311.StrawNb.values-1)) + 499 + 0.44 - 0.88
+    layer4311_wz = np.ones(layer4311.shape[0])*z4311
     
     layers = [layer3000, layer3001, layer3010, layer3011,
               layer3300, layer3301, layer3310, layer3311,
               layer4000, layer4001, layer4010, layer4011,
               layer4300, layer4301, layer4310, layer4311]
+
+    layers_wy = (layer3000_wy, layer3001_wy, layer3010_wy, layer3011_wy,
+                 layer3300_wy, layer3301_wy, layer3310_wy, layer3311_wy,
+                 layer4000_wy, layer4001_wy, layer4010_wy, layer4011_wy,
+                 layer4300_wy, layer4301_wy, layer4310_wy, layer4311_wy)
+    Wy = np.concatenate(layers_wy, axis=0)
+
+    layers_wz = [layer3000_wz, layer3001_wz, layer3010_wz, layer3011_wz,
+                 layer3300_wz, layer3301_wz, layer3310_wz, layer3311_wz,
+                 layer4000_wz, layer4001_wz, layer4010_wz, layer4011_wz,
+                 layer4300_wz, layer4301_wz, layer4310_wz, layer4311_wz]
+    Wz = np.concatenate(layers_wz, axis=0)
 
     zlayers = {0: z3000,
                1: z3001,
@@ -296,7 +326,11 @@ def modify_for_yz_analysis_3_4(event):
                14: z4310,
                15: z4311}
 
-    return pd.concat(layers, axis=0), zlayers
+    data = pd.concat(layers, axis=0)
+    data['Wy'] = Wy
+    data['Wz'] = Wz
+
+    return data, zlayers
 
 
 

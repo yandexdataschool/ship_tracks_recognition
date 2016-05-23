@@ -156,6 +156,8 @@ def get_true_charge(hits):
 
     pdg = pdg_uniques[pdg_counts == pdg_counts.max()][0]
 
+    charge = 0.
+
     if pdg == 13 or pdg == -211:
 
         charge = -1.
@@ -276,3 +278,173 @@ def get_pinv_true_pinv(pinv_dict, true_pinv_dict, true_charge_dict):
     true_pinv = np.array(true_pinv)
 
     return pinv, true_pinv
+
+
+def get_true_label(hits12, hits34, all_hits):
+
+    track_ids_12 = all_hits.loc[hits12].TrackID.values
+    track_ids_34 = all_hits.loc[hits34].TrackID.values
+
+    track_ids_12_uniques, track_ids_12_counts = np.unique(track_ids_12, return_counts=True)
+    true_track_id_12 = track_ids_12_uniques[track_ids_12_counts == track_ids_12_counts.max()][0]
+
+    track_ids_34_uniques, track_ids_34_counts = np.unique(track_ids_34, return_counts=True)
+    true_track_id_34 = track_ids_34_uniques[track_ids_34_counts == track_ids_34_counts.max()][0]
+
+    if true_track_id_12 == true_track_id_34:
+        true_label = 1
+    else:
+        true_label = 0
+
+    return true_label
+
+
+def get_matching_data(reco_events12, reco_events34, all_hits):
+    """
+    """
+
+    data = pd.DataFrame(columns=['EventID',
+                                     'dx', 'dy',
+                                     'k_xz_12', 'b_xz_12',
+                                     'k_yz_12', 'b_yz_12',
+                                     'k_xz_34', 'b_xz_34',
+                                     'k_yz_34', 'b_yz_34',
+                                     'label',
+                                     'track_id_12', 'track_id_34'])
+
+    Bm = -0.75
+    zmagnet = 3070.
+
+    for event_id in reco_events12.keys():
+
+        tracks_yz_12 = reco_events12[event_id][0]
+        hits_yz_12 = reco_events12[event_id][1]
+        tracks_xz_12 = reco_events12[event_id][2]
+        hits_xz_12 = reco_events12[event_id][3]
+
+        tracks_yz_34 = reco_events34[event_id][0]
+        hits_yz_34 = reco_events34[event_id][1]
+        tracks_xz_34 = reco_events34[event_id][2]
+        hits_xz_34 = reco_events34[event_id][3]
+
+
+
+        for track_id_12 in tracks_xz_12.keys():
+
+            track12_x = tracks_xz_12[track_id_12]
+            track12_y = tracks_yz_12[track_id_12 // 10000]
+            track12 = [track12_x, track12_y]
+
+            hits12_x = hits_xz_12[track_id_12]
+            hits12_y = hits_yz_12[track_id_12 // 10000]
+            hits12 = list(hits12_x) + list(hits12_y)
+
+            for track_id_34 in tracks_xz_34.keys():
+
+                track34_x = tracks_xz_34[track_id_34]
+                track34_y = tracks_yz_34[track_id_34 // 10000]
+                track34 = [track34_x, track34_y]
+
+                hits34_x = hits_xz_34[track_id_34]
+                hits34_y = hits_yz_34[track_id_34 // 10000]
+                hits34 = list(hits34_x) + list(hits34_y)
+
+
+
+                [k_xz_12, b_xz_12] = track12[0]
+                [k_yz_12, b_yz_12] = track12[1]
+
+                [k_xz_34, b_xz_34] = track34[0]
+                [k_yz_34, b_yz_34] = track34[1]
+
+                dx, dy = get_dx_dy(track12, track34, zmagnet)
+
+                true_label = get_true_label(hits12, hits34, all_hits)
+
+
+                data.loc[len(data)] = [event_id,
+                                       dx, dy,
+                                       k_xz_12, b_xz_12,
+                                       k_yz_12, b_yz_12,
+                                       k_xz_34, b_xz_34,
+                                       k_yz_34, b_yz_34,
+                                       true_label,
+                                       track_id_12, track_id_34]
+
+
+
+
+
+
+    return data
+
+
+def get_new_matched_tracks(reco_events12, reco_events34, match_tracks):
+    """
+    Match tracks reconstructed before and after the magnet.
+    :param dict reco_events12: dictionary of the reconstructed tracks before the magnet.
+                               Key - event number,
+                               value - [tracks_yz, linking_table_yz, tracks_xz, linking_table_xz].
+    :param dict reco_events34: dictionary of the reconstructed tracks after the magnet.
+                               Key - event number,
+                               value - [tracks_yz, linking_table_yz, tracks_xz, linking_table_xz].
+    :return: dictionary of the matched tracks, where key - event number, value - list of the matched tracks ids;
+             dictionary of charge values of the tracks, where key - event number, value - list of charge values;
+             dictionary of inverse momentum values of the tracks, where key - event number, value - list of inverse momentum values;
+             list of distances between the matched tracks on y;
+             list of distances between the matched tracks on x.
+    """
+
+    dist_y = []
+    dist_x = []
+    maching_dict = {}
+    charge_dict = {}
+    pinv_dict = {}
+
+    Bm = -0.75
+    zmagnet = 3070.
+
+    for event_id in reco_events12.keys():
+
+        tracks_yz_12 = reco_events12[event_id][0]
+        tracks_xz_12 = reco_events12[event_id][2]
+
+        tracks_yz_34 = reco_events34[event_id][0]
+        tracks_xz_34 = reco_events34[event_id][2]
+
+        maching_dict[event_id] = []
+        charge_dict[event_id] = []
+        pinv_dict[event_id] = []
+
+        for track_id_12, track_id_34 in match_tracks[event_id]:
+
+
+            track12_x = tracks_xz_12[track_id_12]
+            track12_y = tracks_yz_12[track_id_12 // 10000]
+            track12 = [track12_x, track12_y]
+
+
+            track34_x = tracks_xz_34[track_id_34]
+            track34_y = tracks_yz_34[track_id_34 // 10000]
+            track34 = [track34_x, track34_y]
+
+            dx, dy = get_dx_dy(track12, track34, zmagnet)
+
+
+            # distance
+            maching_dict[event_id].append([track_id_12, track_id_34])
+            dist_y.append(dy)
+            dist_x.append(dx)
+
+            # charge
+            charge = get_charge(track12, track34)
+            charge_dict[event_id].append(charge)
+
+            # momentum inv
+            pinv = get_pinv(track12, track34, Bm)
+            pinv_dict[event_id].append(pinv)
+
+
+
+
+    return charge_dict, pinv_dict, dist_y, dist_x
