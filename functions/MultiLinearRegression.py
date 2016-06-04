@@ -43,7 +43,8 @@ class MultiLinearRegression(object):
                  x_unique=True, 
                  n_neighbors=10, 
                  step=0.05,  
-                 classifier=None):
+                 track_classifier=None,
+                 hit_classifier=None):
 
         self.n = n
         self.subsample = subsample
@@ -51,7 +52,10 @@ class MultiLinearRegression(object):
         self.n_neighbors = n_neighbors
         self.step = step
         self.n_tracks = n_tracks
-        self.classifier = classifier
+        self.track_classifier = track_classifier
+        self.hit_classifier = hit_classifier
+        self.unique_sorted_dists = []
+        self.unique_sorted_indeces = []
 
 
     def get_index_combinations(self, X, n):
@@ -143,20 +147,6 @@ class MultiLinearRegression(object):
         return tracks
     
     def _select_array(self, array):
-#         std = 0
-#         square = 0
-#         last_num = len(array)
-#         for num, i in enumerate(array):
-
-#             square += i**2
-#             std = numpy.sqrt(1.*square/(num))
-#             #square += i**2
-
-#             if 2. * std < i and num >= self.n:
-#                 last_num = num
-#                 break
-                
-#         res = range(last_num)
 
         max_model = None
         max_score = -1
@@ -185,6 +175,16 @@ class MultiLinearRegression(object):
                 
         return indeces
     
+    def _hits_classification(self, dists, track):
+        
+        ks = [[track[0]]] * len(dists)
+        bs = [[track[1]]] * len(dists)
+        
+        X = numpy.concatenate((dists.reshape(-1,1), ks, bs), axis=1)
+        predict = self.hit_classifier.predict(X)
+        
+        return numpy.arange(len(dists))[predict == 1]
+    
     def get_points(self, X, y, track):
         
         dists = numpy.abs(y - (track[:-1] * X).sum(axis=1) - track[-1])
@@ -211,7 +211,16 @@ class MultiLinearRegression(object):
         unique_sorted_y = unique_y[sorted_dists_indeces]
         unique_sorted_indeces = unique_indeces[sorted_dists_indeces]
         
-        track_indeces = self._select_array(unique_sorted_dists)
+        self.unique_sorted_dists.append(unique_sorted_dists)
+        self.unique_sorted_indeces.append(unique_sorted_indeces)
+        
+        if self.hit_classifier == None:
+        
+            track_indeces = self._select_array(unique_sorted_dists)
+            
+        else:
+            
+            track_indeces = self._hits_classification(unique_sorted_dists, track)
         
         return unique_sorted_X[track_indeces], unique_sorted_y[track_indeces], unique_sorted_indeces[track_indeces]
         
@@ -239,7 +248,7 @@ class MultiLinearRegression(object):
         bs = numpy.array([lr.intercept_ for lr in lrs]).reshape((-1,1))
         
         X = numpy.concatenate((scores.reshape(-1,1), ks, bs.reshape(-1,1)), axis=1)
-        y_predict = self.classifier.predict(X)
+        y_predict = self.track_classifier.predict(X)
         
         return scores[y_predict == 1], lrs[y_predict == 1], indeces[y_predict == 1]
     
@@ -251,6 +260,8 @@ class MultiLinearRegression(object):
         
         tracks = []
         tracks_labels = -1 * numpy.ones(len(X))
+        
+        self.qw = []
         
         if unique_index == None:
             
@@ -265,6 +276,8 @@ class MultiLinearRegression(object):
                 tracks_labels[one_track_indeces] = num
                 tracks.append(one_track)
                 
+                self.qw.append(one_track_indeces)
+                
                 looked_inds += list(one_track_indeces)
                 
                 selection = numpy.array([not self._isAinB(i, looked_inds) for i in indeces])
@@ -278,7 +291,7 @@ class MultiLinearRegression(object):
         
         scores, lrs, indeces = self.fit_lines(X, y)
         
-        if self.classifier != None:
+        if self.track_classifier != None:
             
             scores, lrs, indeces = self._classification(scores, lrs, indeces)
             self.scores_ = scores
