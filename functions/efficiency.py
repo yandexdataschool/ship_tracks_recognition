@@ -81,7 +81,29 @@ def efficiency_per_track(event_ids, all_hits, reco_events):
     return all_eff_y, all_eff_stereo, all_eff_station
 
 
-def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, match_tracks, true_pdg_dict):
+def view_check_reco_event(tracks_hits, pdg_codes_sets, all_hits):
+
+    all_pdgs = []
+
+    for track_id in tracks_hits.keys():
+
+        pdgs, counts = np.unique(all_hits.loc[tracks_hits[track_id]][['PdgCode']].values, return_counts=True)
+        track_pdg = pdgs#[counts == counts.max()][0]
+
+        #all_pdgs.append(track_pdg)
+        all_pdgs += list(track_pdg)
+
+    #print all_pdgs
+    check = 0
+    for pdg_set in pdg_codes_sets:
+
+        if len(set(np.unique(all_pdgs)) & set(pdg_set)) == len(pdg_set):
+            check = 1
+
+    return check
+
+
+def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, match_tracks, true_pdg_dict, all_hits):
     """
     Efficiencies per event after each stage of the tracks pattern recognition.
     :param reconstructible_events: dictionary of the reconstructed events.
@@ -116,15 +138,20 @@ def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, m
 
 
     passed_event_ids = []
+    missed_events = []
 
     # y_12
     for event_id in reconstructible_events.keys():
 
         tracks_y = reco_events12[event_id][0]
+        check = view_check_reco_event(reco_events12[event_id][1], [[211, 13], [-211, -13]], all_hits)
 
-        if len(tracks_y) > 1:
+        if len(tracks_y) > 1 and check == 1:
             n_events_y_12 += 1.
             passed_event_ids.append(event_id)
+
+        else:
+            missed_events.append(event_id)
 
     # stereo_12
     reco_events = passed_event_ids
@@ -133,10 +160,14 @@ def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, m
     for event_id in reco_events:
 
         tracks_stsreo = reco_events12[event_id][2]
+        check = view_check_reco_event(reco_events12[event_id][3], [[211, 13], [-211, -13]], all_hits)
 
-        if len(tracks_stsreo) > 1:
+        if len(tracks_stsreo) > 1 and check == 1:
             n_events_stereo_12 += 1.
             passed_event_ids.append(event_id)
+
+        else:
+            missed_events.append(event_id)
 
     # station_12
     n_events_station_12 = n_events_stereo_12
@@ -148,10 +179,14 @@ def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, m
     for event_id in reco_events:
 
         tracks_stsreo = reco_events34[event_id][0]
+        check = view_check_reco_event(reco_events34[event_id][1], [[211, 13], [-211, -13]], all_hits)
 
-        if len(tracks_stsreo) > 1:
+        if len(tracks_stsreo) > 1 and check == 1:
             n_events_y_34 += 1.
             passed_event_ids.append(event_id)
+
+        else:
+            missed_events.append(event_id)
 
     # stereo_34
     reco_events = passed_event_ids
@@ -160,10 +195,14 @@ def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, m
     for event_id in reco_events:
 
         tracks_stsreo = reco_events34[event_id][2]
+        check = view_check_reco_event(reco_events34[event_id][3], [[211, 13], [-211, -13]], all_hits)
 
-        if len(tracks_stsreo) > 1:
+        if len(tracks_stsreo) > 1 and check == 1:
             n_events_stereo_34 += 1.
             passed_event_ids.append(event_id)
+
+        else:
+            missed_events.append(event_id)
 
     # station_34
     n_events_station_34 = n_events_stereo_34
@@ -181,6 +220,9 @@ def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, m
             n_events_combined_12_34 += 1
             passed_event_ids.append(event_id)
 
+        else:
+            missed_events.append(event_id)
+
 
     # matched
     reco_events = passed_event_ids
@@ -197,10 +239,21 @@ def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, m
 
                 n_mismatched += 1
 
+        if len(pdg_event) != 2:
+
+            n_mismatched += 1
+
+        if len(pdg_event) == 2 and pdg_event[0][0] == pdg_event[1][0]:
+
+            n_mismatched += 1
+
 
         if n_mismatched == 0:
             n_events_matched += 1
             passed_event_ids.append(event_id)
+
+        else:
+            missed_events.append(event_id)
 
 
 
@@ -216,4 +269,4 @@ def efficiency_per_event(reconstructible_events, reco_events12, reco_events34, m
 
     n_events = np.array(n_events)
 
-    return n_events
+    return n_events, missed_events

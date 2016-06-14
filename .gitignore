@@ -2,3 +2,7 @@
 *.pyc
 *.DS_Store
 *.ipynb_checkpoints
+vetoPoint.csv
+MCTrack.csv
+strawtubesPoint.csv
+strawtubesPoint_decoded_hits.csv
