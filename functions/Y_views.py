@@ -427,6 +427,7 @@ def points_crossing_line_yz(plane_k, plane_b, plane_width, hits, n_min, regr_typ
 
         if regr_type==0:
             lin_regr = np.polyfit(Z, Y, 1, w=weights)
+            #lin_regr = np.polyfit(Z, Y, 1)
         else:
             mlr = MarginLinearRegression(n_iter=2)
             R = np.array(R).reshape(-1, 1)

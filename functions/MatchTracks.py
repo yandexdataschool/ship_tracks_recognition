@@ -72,7 +72,7 @@ def get_pinv(track12, track34, Bm):
 
     return pinv
 
-def get_matched_tracks(reco_events12, reco_events34):
+def get_matched_tracks(reco_events12, reco_events34, zmagnet = 3070.):
     """
     Match tracks reconstructed before and after the magnet.
     :param dict reco_events12: dictionary of the reconstructed tracks before the magnet.
@@ -95,7 +95,7 @@ def get_matched_tracks(reco_events12, reco_events34):
     pinv_dict = {}
 
     Bm = -0.75
-    zmagnet = 3070.
+    #zmagnet = 3070.
 
     for event_id in reco_events12.keys():
 

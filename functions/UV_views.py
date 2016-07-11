@@ -672,6 +672,8 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
     crossing_points = []
     X = [] # for linear regression
     Z = []
+    R = []
+    weights = []
     n = 0 # number of touched layers
     marks = {}
 
@@ -691,6 +693,8 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
                 crossing_points.append(j)
                 Z.append(z)
                 X.append(hits[z][j].x)
+                R.append(hits[z][j].dist2Wire)
+                weights.append(1 / (hits[z][j].dist2Wire)**(0.5))
                 marks[z].append(j)
                 indicator = True
 
@@ -704,7 +708,7 @@ def points_crossing_line_xz(k, b, width, hits, intersecting_hits, n_min):
 
     else:
 
-        lin_regr = np.polyfit(Z, X, 1)
+        lin_regr = np.polyfit(Z, X, 1, w=weights)
 
         for z in marks:
 
