@@ -58,6 +58,8 @@ class Combinator(object):
                 dx = numpy.abs(x_after - x_before)
                 dr = numpy.sqrt(dy**2 + dx**2)
 
+                #print dy, dx
+
 
                 if dy <= dy_max and dx <= dx_max:
 
