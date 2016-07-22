@@ -2,7 +2,7 @@ __author__ = 'Alenkin Oleg, Mikhail Hushchyn'
 
 import numpy as np
 import pandas as pd
-from MultiLinearRegression import *
+from regressor import *
 from math import *
 
 
