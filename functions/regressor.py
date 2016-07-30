@@ -58,23 +58,26 @@ class MultiLinearRegression(object):
         indeces = range(len(x))
         numpy.random.seed(42)
 
-        for one_combination in itertools.combinations(indeces, min_samples):
+        counter = 0
 
+        while counter < self.subsample:
 
-            if self.subsample >= numpy.random.rand():
+            one_combination = numpy.random.choice(a=indeces, size=min_samples, replace=False)
 
-                if self.x_unique:
+            if self.x_unique:
 
-                    x_one = x[list(one_combination)]
-                    x_one_unique = numpy.unique(x_one)
+                x_one = x[list(one_combination)]
+                x_one_unique = numpy.unique(x_one)
 
-                    if len(x_one_unique) == min_samples:
-
-                        index_combinations.append(list(one_combination))
-
-                else:
+                if len(x_one_unique) == min_samples:
 
                     index_combinations.append(list(one_combination))
+                    counter += 1
+
+            else:
+
+                index_combinations.append(list(one_combination))
+                counter += 1
 
         return index_combinations
 
@@ -201,6 +204,7 @@ class MultiLinearRegression(object):
         X_passed_standart = X_standart
 
 
+        n_neighbors = min(n_neighbors, len(X_passed_standart) - 1)
         knn = NearestNeighbors(n_neighbors=n_neighbors, leaf_size=100)
         knn.fit(X_passed_standart)
         knn_dists, knn_indeces = knn.kneighbors()
