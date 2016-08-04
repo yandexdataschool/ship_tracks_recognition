@@ -17,11 +17,15 @@ class JustLinearRegression(object):
 
     def fit(self, x, y, sample_weight=None):
 
-        self.slope, \
-        self.interept, \
-        self.rvalue, \
-        self.pvalue, \
-        self.stderr = scipy.stats.linregress(x, y)
+        # self.slope, \
+        # self.interept, \
+        # self.rvalue, \
+        # self.pvalue, \
+        # self.stderr = scipy.stats.linregress(x, y)
+
+        self.slope, self.interept = numpy.polyfit(x, y, 1)
+        self.rvalue = numpy.corrcoef(x, y)[0, 1]
+        self.stderr = numpy.std(numpy.abs(y - self.slope * x - self.interept))
 
 
 class MultiLinearRegression(object):
@@ -58,26 +62,48 @@ class MultiLinearRegression(object):
         indeces = range(len(x))
         numpy.random.seed(42)
 
-        counter = 0
+        if self.subsample > 1:
 
-        while counter < self.subsample:
+            counter = 0
 
-            one_combination = numpy.random.choice(a=indeces, size=min_samples, replace=False)
+            while counter < self.subsample:
 
-            if self.x_unique:
+                one_combination = numpy.random.choice(a=indeces, size=min_samples, replace=False)
 
-                x_one = x[list(one_combination)]
-                x_one_unique = numpy.unique(x_one)
+                if self.x_unique:
 
-                if len(x_one_unique) == min_samples:
+                    x_one = x[list(one_combination)]
+                    x_one_unique = numpy.unique(x_one)
+
+                    if len(x_one_unique) == min_samples:
+
+                        index_combinations.append(list(one_combination))
+                        counter += 1
+
+                else:
 
                     index_combinations.append(list(one_combination))
                     counter += 1
 
-            else:
+        else:
 
-                index_combinations.append(list(one_combination))
-                counter += 1
+            for one_combination in itertools.combinations(indeces, min_samples):
+
+
+                if self.subsample >= numpy.random.rand():
+
+                    if self.x_unique:
+
+                        x_one = x[list(one_combination)]
+                        x_one_unique = numpy.unique(x_one)
+
+                        if len(x_one_unique) == min_samples:
+
+                            index_combinations.append(list(one_combination))
+
+                    else:
+
+                        index_combinations.append(list(one_combination))
 
         return index_combinations
 
@@ -90,7 +116,6 @@ class MultiLinearRegression(object):
         slopes = []
         intercepts = []
         rvalues = []
-        pvalues = []
         stderrs = []
 
         for ind in indexes:
@@ -110,42 +135,39 @@ class MultiLinearRegression(object):
             slopes += [mlr.slope]
             intercepts += [mlr.interept]
             rvalues += [mlr.rvalue]
-            pvalues += [mlr.pvalue]
             stderrs += [mlr.stderr]
 
         return numpy.array(indexes), numpy.array(slopes), numpy.array(intercepts), \
-               numpy.array(rvalues), numpy.array(pvalues), numpy.array(stderrs)
+               numpy.array(rvalues), numpy.array(stderrs)
 
 
-    def collect_track_classification_data(self, indexes, slopes, intercepts, rvalues, pvalues, stderrs):
+    def collect_track_classification_data(self, indexes, slopes, intercepts, rvalues, stderrs):
 
         self.track_classification_data_['indexes'] = indexes
         self.track_classification_data_['slopes'] = slopes
         self.track_classification_data_['intercepts'] = intercepts
         self.track_classification_data_['rvalues'] = rvalues
-        self.track_classification_data_['pvalues'] = pvalues
         self.track_classification_data_['stderrs'] = stderrs
 
-    def track_classification(self, indexes, slopes, intercepts, rvalues, pvalues, stderrs):
+    def track_classification(self, indexes, slopes, intercepts, rvalues, stderrs):
 
 
-        self.collect_track_classification_data(indexes, slopes, intercepts, rvalues, pvalues, stderrs)
+        self.collect_track_classification_data(indexes, slopes, intercepts, rvalues, stderrs)
 
         if self.track_classifier != None:
 
             X = numpy.concatenate(  (slopes.reshape(-1,1),
                                      intercepts.reshape(-1,1),
                                      rvalues.reshape(-1,1),
-                                     pvalues.reshape(-1,1),
                                      stderrs.reshape(-1,1)), axis=1)
             y_predict = self.track_classifier.predict(X)
 
             return indexes[y_predict == 1], slopes[y_predict == 1], intercepts[y_predict == 1], \
-                   rvalues[y_predict == 1], pvalues[y_predict == 1], stderrs[y_predict == 1]
+                   rvalues[y_predict == 1], stderrs[y_predict == 1]
 
         else:
 
-            return indexes, slopes, intercepts, rvalues, pvalues, stderrs
+            return indexes, slopes, intercepts, rvalues, stderrs
 
 
     def get_track_classification_data(self, labels):
@@ -156,7 +178,6 @@ class MultiLinearRegression(object):
         slopes = self.track_classification_data_['slopes']
         intercepts = self.track_classification_data_['intercepts']
         rvalues = self.track_classification_data_['rvalues']
-        pvalues = self.track_classification_data_['pvalues']
         stderrs = self.track_classification_data_['stderrs']
 
         unique_labels = [numpy.unique(labels[i]) for i in indexes]
@@ -165,7 +186,6 @@ class MultiLinearRegression(object):
         data['slope'] = slopes
         data['intercept'] = intercepts
         data['rvalue'] = numpy.nan_to_num(rvalues)
-        data['pvalue'] = numpy.nan_to_num(pvalues)
         data['stderr'] = numpy.nan_to_num(stderrs)
         data['label'] = clf_labels
 
@@ -430,16 +450,15 @@ class MultiLinearRegression(object):
     
     def fit(self, x, y, sample_weight=None):
 
-        indexes, slopes, intercepts, rvalues, pvalues, stderrs = self.fit_lines(x, y, sample_weight)
+        indexes, slopes, intercepts, rvalues, stderrs = self.fit_lines(x, y, sample_weight)
 
-        indexes, slopes, intercepts, rvalues, pvalues, stderrs = \
-            self.track_classification(indexes, slopes, intercepts, rvalues, pvalues, stderrs)
+        indexes, slopes, intercepts, rvalues, stderrs = \
+            self.track_classification(indexes, slopes, intercepts, rvalues, stderrs)
 
         self.indexes_ = indexes
         self.slopes_ = slopes
         self.intercepts_ = intercepts
         self.rvalues_ = rvalues
-        self.pvalues_ = pvalues
         self.stderrs_ = stderrs
 
         
