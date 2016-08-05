@@ -27,7 +27,7 @@ class Retina2DTrackerOne(object):
         self.labels_ = None
         self.tracks_params_ = None
 
-    def retina_func(self, track_prams, x, y, sigma):
+    def retina_func(self, track_prams, x, y, sigma, sample_weight=None):
         """
         Retina response.
         :param track_prams: list of floats [k, b], track parameters for the line: y = kx + b.
@@ -39,13 +39,21 @@ class Retina2DTrackerOne(object):
 
         rs = track_prams[0] * x + track_prams[1] - y
 
-        exps = numpy.exp(- (rs/sigma)**2)
+
+        if sample_weight == None:
+
+            exps = numpy.exp(- (rs/sigma)**2)
+
+        else:
+
+            exps = numpy.exp(- (rs/sigma)**2) * sample_weight
+
 
         retina = exps.sum()
 
         return -retina
 
-    def retina_grad(self, track_prams, x, y, sigma):
+    def retina_grad(self, track_prams, x, y, sigma, sample_weight=None):
         """
         Retina grad.
         :param track_prams: list of floats [k, b], track parameters for the line: y = kx + b.
@@ -57,14 +65,22 @@ class Retina2DTrackerOne(object):
 
         rs = track_prams[0] * x + track_prams[1] - y
 
-        exps = numpy.exp(- (rs/sigma)**2)
+
+        if sample_weight == None:
+
+            exps = numpy.exp(- (rs/sigma)**2)
+
+        else:
+
+            exps = numpy.exp(- (rs/sigma)**2) * sample_weight
+
 
         dks = - 2.*rs / sigma**2 * exps * x
         dbs = - 2.*rs / sigma**2 * exps
 
         return -numpy.array([dks.sum(), dbs.sum()])
 
-    def fit_one_track(self, x, y):
+    def fit_one_track(self, x, y, sample_weight=None):
         """
         Search for one track.
         :param x: list of floats, x-coordinates of the hits.
@@ -80,7 +96,7 @@ class Retina2DTrackerOne(object):
 
         while sigma >= sigma_min:
 
-            res = minimize(self.retina_func, params, args = (x, y, sigma), method='BFGS', jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
+            res = minimize(self.retina_func, params, args = (x, y, sigma, sample_weight), method='BFGS', jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
             sigma *= self.sigma_decay_rate
 
             params = res.x
@@ -105,10 +121,18 @@ class Retina2DTrackerOne(object):
             x_track = x[labels == -1]
             y_track = y[labels == -1]
 
+            if sample_weight == None:
+
+                sample_weight_track = None
+
+            else:
+
+                sample_weight_track = sample_weight[labels == -1]
+
             if len(x_track) < self.min_hits or len(x_track) <= 0:
                 break
 
-            one_track_params = self.fit_one_track(x_track, y_track)
+            one_track_params = self.fit_one_track(x_track, y_track, sample_weight_track)
             tracks_params.append(one_track_params)
 
             dists = numpy.abs(one_track_params[0] * x + one_track_params[1] - y)
@@ -155,7 +179,7 @@ class Retina2DTrackerTwo(Retina2DTrackerOne):
         self.tracks_params_ = None
 
 
-    def fit_one_track(self, x, y):
+    def fit_one_track(self, x, y, sample_weight=None):
         """
         Search for one track.
         :param x: list of floats, x-coordinates of the hits.
@@ -184,7 +208,7 @@ class Retina2DTrackerTwo(Retina2DTrackerOne):
                 k0 = (y2 - y1) / (x2 - x1)
                 b0 = y1 - k0 * x1
 
-                r = -self.retina_func([k0, b0], x, y, sigma)
+                r = -self.retina_func([k0, b0], x, y, sigma, sample_weight)
 
                 rs.append(r)
                 ks.append(k0)
@@ -196,7 +220,7 @@ class Retina2DTrackerTwo(Retina2DTrackerOne):
 
         params = [ks[rs == rs.max()], bs[rs == rs.max()]]
 
-        res = minimize(self.retina_func, params, args = (x, y, sigma), method='BFGS', jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
+        res = minimize(self.retina_func, params, args = (x, y, sigma, sample_weight), method='BFGS', jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
 
         params = res.x
 
