@@ -6,11 +6,6 @@ The purpose of the SHiP spectrometer tracker is to reconstruct the tracks of cha
 
 ![track](pic/tracks.png)
 
-# Method description
+# Baseline
 
 A base tracks pattern recognition method is described in an [article](https://cds.cern.ch/record/2005715/files/main.pdf).
-Main stages of these solution have been realized here.
-
-# TODO
-
-Use machine learning techniques to improve efficiecy of the pattern recognition.
