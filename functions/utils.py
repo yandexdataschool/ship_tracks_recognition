@@ -125,6 +125,9 @@ def plot_event(event_id, data, tracks):
 
     for track_id in range(len(track12)):
 
+        if len(track12[track_id][1]) == 0:
+            continue
+
         plt.plot(event12.Z.values, event12.Z.values * track12[track_id][1][0] + track12[track_id][1][1])
 
     plt.xlabel('Z')
@@ -146,6 +149,9 @@ def plot_event(event_id, data, tracks):
     plt.scatter(event34.Z.values, event34.X.values)
 
     for track_id in range(len(track34)):
+
+        if len(track34[track_id][1]) == 0:
+            continue
 
         plt.plot(event34.Z.values, event34.Z.values * track34[track_id][1][0] + track34[track_id][1][1])
 
