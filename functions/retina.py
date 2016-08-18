@@ -129,7 +129,7 @@ class Retina2DTrackerOne(object):
 
                 sample_weight_track = sample_weight[labels == -1]
 
-            if len(x_track) < self.min_hits or len(x_track) <= 0:
+            if len(numpy.unique(x_track)) < self.min_hits or len(x_track) <= 0:
                 break
 
             one_track_params = self.fit_one_track(x_track, y_track, sample_weight_track)
@@ -218,7 +218,8 @@ class Retina2DTrackerTwo(Retina2DTrackerOne):
         ks = numpy.array(ks)
         bs = numpy.array(bs)
 
-        params = [ks[rs == rs.max()], bs[rs == rs.max()]]
+
+        params = [ks[rs == rs.max()][0], bs[rs == rs.max()][0]]
 
         res = minimize(self.retina_func, params, args = (x, y, sigma, sample_weight), method='BFGS', jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
 
