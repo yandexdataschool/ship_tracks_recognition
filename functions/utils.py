@@ -162,5 +162,118 @@ def plot_event(event_id, data, tracks):
 
 
 
+################# Efficiency per track #############################
+import pandas
+from metrics import TracksReconstractionMetrics
+
+def get_effs_per_track_and_p_station(tracks, data, event_ids, stations='12'):
+
+    tracks_eff_before = pandas.DataFrame(columns=['Eff', 'Momentum'])
+
+    for event_id in event_ids:
+
+        if stations == '12':
+
+            labels = tracks[event_id]['labels12']
+
+            event = data[data.EventID == event_id]
+            event = event[(event.StatNb == 1) + (event.StatNb == 2)]
+
+        elif stations == '34':
+
+            labels = tracks[event_id]['labels34']
+
+            event = data[data.EventID == event_id]
+            event = event[(event.StatNb == 3) + (event.StatNb == 4)]
+
+        true_labels = event.Label.values
+
+        trm = TracksReconstractionMetrics(0.2)
+        trm.fit(labels, event)
+
+        eff = trm.efficiencies_
+
+
+        for num, lab in enumerate(numpy.unique(labels[labels != -1])):
+
+            valid_labs = true_labels[labels == lab]
+            unique, counts = numpy.unique(valid_labs[valid_labs!=-1], return_counts=True)
+
+            if len(unique) == 0:
+                continue
+
+            true_lab = unique[counts == counts.max()][0]
+
+            track = event[true_labels == true_lab]
+            p_one = numpy.sqrt(track.Px.values**2+track.Py.values**2+track.Pz.values**2).mean()
+
+            eff_one = eff[num]
+
+            tracks_eff_before.loc[len(tracks_eff_before)] = [eff_one, p_one]
+
+    return tracks_eff_before
+
+def get_effs_per_track_and_p(tracks, data, event_ids):
+
+    tracks_eff_before12 = get_effs_per_track_and_p_station(tracks, data, event_ids, stations='12')
+    tracks_eff_before34 = get_effs_per_track_and_p_station(tracks, data, event_ids, stations='34')
+
+    return pandas.concat([tracks_eff_before12, tracks_eff_before34], axis=0)
+
+
+def get_bins(x, y, bins, x_min, x_max):
+
+    step = 1. * ( x_max - x_min ) / bins
+    edges = [x_min + i * step for i in range(0, bins+1)]
+
+    y_means = []
+    y_err = []
+    x_err = []
+    x_means = []
+
+    for i in range(0, len(edges)-1):
+
+        left = edges[i]
+        right = edges[i+1]
+
+        if i == len(edges)-2:
+
+            y_bin = y[(x >= left) * (x <= right)]
+
+        else:
+
+            y_bin = y[(x >= left) * (x < right)]
+
+
+        y_means.append(y_bin.mean())
+        y_err.append(1. * y_bin.std() / (len(y_bin) + 0.001))
+        x_means.append(0.5*(left + right))
+        x_err.append(0.5*(-left + right))
+
+    return x_means, y_means, x_err, y_err
+
+
+def plot_efficiency_per_track(tracks, data, event_ids, bins):
+
+    tracks_eff = get_effs_per_track_and_p(tracks, data, event_ids)
+
+    x_means, y_means, x_err, y_err = get_bins(tracks_eff.Momentum.values,
+                                              tracks_eff.Eff.values,
+                                              bins,
+                                              tracks_eff.Momentum.values.min(),
+                                              tracks_eff.Momentum.values.max())
+
+    plt.figure(figsize=(10, 7))
+    plt.errorbar(x_means, y_means, xerr=x_err, yerr=y_err, fmt='none')
+    plt.scatter(x_means, y_means, linewidth=0, color='r')
+    plt.ylim(0.0, 1.05)
+    plt.xlim(0, x_means[-1]+x_err[-1]+1)
+    plt.xlabel('Particle Momentum', size=15)
+    plt.ylabel('Efficiency per track', size=15)
+    plt.xticks(size=15)
+    plt.yticks(size=15)
+
+
+
 
 
