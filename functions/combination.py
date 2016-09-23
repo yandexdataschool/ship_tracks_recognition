@@ -38,6 +38,9 @@ class Combinator(object):
         dy_max = self.dy_max
         dx_max = self.dx_max
 
+        self.dx = []
+        self.dy = []
+
         tracks_combinations = []
 
         for track_id_before, one_track_before in enumerate(tracks_before):
@@ -62,6 +65,9 @@ class Combinator(object):
 
 
                 if dy <= dy_max and dx <= dx_max:
+
+                    self.dx.append(x_after - x_before)
+                    self.dy.append(y_after - y_before)
 
                     tracks_combinations.append(numpy.array([track_id_before, track_id_after]))
                     continue
@@ -331,3 +337,85 @@ class SuperCombinator(Combinator):
                     continue
 
         return numpy.array(tracks_combinations)
+
+
+
+
+from numpy.linalg import inv
+
+class GlobalFit(object):
+
+    def __init__(self, z_magnet=3070):
+
+        self.z_magnet = z_magnet
+
+    def fit(self, x1, y1, x2, y2, w1=None, w2=None):
+
+        xm = self.z_magnet
+
+        xx1 = numpy.concatenate((x1.reshape(-1, 1) - xm,
+                                 numpy.zeros((len(x1), 1)),
+                                 numpy.ones((len(x1), 1))), axis=1)
+        xx2 = numpy.concatenate((x2.reshape(-1, 1) - xm,
+                                 x2.reshape(-1, 1) - xm,
+                                 numpy.ones((len(x2), 1))), axis=1)
+
+        yy1 = y1.reshape(-1, 1)
+        yy2 = y2.reshape(-1, 1)
+
+
+        X = numpy.matrix(numpy.concatenate((xx1, xx2), axis=0))
+        Y = numpy.matrix(numpy.concatenate((yy1, yy2), axis=0))
+
+        if w1==None or w2==None:
+            W = numpy.matrix(numpy.eye(len(x1) + len(x2)))
+        else:
+            ww1 = w1.reshape(-1, 1)
+            ww2 = w2.reshape(-1, 1)
+            ww = numpy.concatenate((ww1, ww2), axis=0)
+            W = numpy.matrix(numpy.eye(len(ww)) * ww)
+
+        a = inv(X.T * W * X) * X.T * W * Y
+
+        return numpy.array(a).reshape(-1)
+
+
+class MomentumCorrecter(object):
+
+    def __init__(self, z_magnet=3070., magnetic_field=-0.75):
+
+        self.z_magnet = z_magnet
+        self.magnetic_field = magnetic_field
+
+    def fit(self, labels_before, labels_after, tracks_combinations, event_before, event_after, weights_before=None, weights_after=None):
+
+        Bm = self.magnetic_field
+        inv_momentums = []
+
+        for one_tracks_combination in tracks_combinations:
+
+            track_before = event_before[(event_before.IsStereo.values==0)*(labels_before == one_tracks_combination[0])]
+            track_after = event_after[(event_after.IsStereo.values==0)*(labels_after == one_tracks_combination[1])]
+
+            x1 = track_before.Wz1.values
+            y1 = track_before.Wy1.values
+            x2 = track_after.Wz1.values
+            y2 = track_after.Wy1.values
+
+            if weights_before==None or weights_after==None:
+                w1 = None
+                w2 = None
+            else:
+                w1 = weights_before[(event_before.IsStereo.values==0)*(labels_before == one_tracks_combination[0])]
+                w2 = weights_after[(event_after.IsStereo.values==0)*(labels_after == one_tracks_combination[1])]
+
+            gf = GlobalFit()
+            k, dk, ym = gf.fit(x1, y1, x2, y2, w1, w2)
+
+            pinv = numpy.sin(-dk) / (0.3 * Bm)
+
+            #pinv = numpy.abs(pinv) # !!!!
+
+            inv_momentums.append(pinv)
+
+        self.inv_momentums_ = numpy.array(inv_momentums)
