@@ -78,31 +78,40 @@ class TracksReconstruction2D(object):
 
         for track_id, one_track_y in enumerate(tracks_params_y):
 
-            plane_k, plane_b = one_track_y
-            x_stereo, y_stereo = self.get_xz(plane_k, plane_b, event_stereo)
+            if len(one_track_y) != 0:
 
-            if sample_weight != None:
-                sample_weight_stereo = sample_weight[mask_stereo == 1][used==0]
+                plane_k, plane_b = one_track_y
+                x_stereo, y_stereo = self.get_xz(plane_k, plane_b, event_stereo)
+
+                sel = (used==0) * (numpy.abs(y_stereo) <= 293.)
+
+                if sample_weight != None:
+                    sample_weight_stereo = sample_weight[mask_stereo == 1][sel]
+                else:
+                    sample_weight_stereo = None
+
+                self.model_stereo.fit(x_stereo[sel], y_stereo[sel], sample_weight_stereo)
+                labels_stereo = -1. * numpy.ones(len(event_stereo))
+                labels_stereo[sel] = self.model_stereo.labels_
+                tracks_params_stereo = self.model_stereo.tracks_params_
+
+
+                unique, counts = numpy.unique(labels_stereo[labels_stereo != -1], return_counts=True)
+                if len(unique) != 0:
+                    max_hits_track_id = unique[counts == counts.max()][0]
+                    one_track_stereo = tracks_params_stereo[max_hits_track_id]
+                else:
+                    max_hits_track_id = -999.
+                    one_track_stereo = []
+
+                used[labels_stereo == max_hits_track_id] = 1
+
+                self.labels_[mask_stereo] = track_id * (labels_stereo == max_hits_track_id) + \
+                self.labels_[mask_stereo] * (labels_stereo != max_hits_track_id)
+
             else:
-                sample_weight_stereo = None
 
-            self.model_stereo.fit(x_stereo[used==0], y_stereo[used==0], sample_weight_stereo)
-            labels_stereo = -1. * numpy.ones(len(event_stereo))
-            labels_stereo[used==0] = self.model_stereo.labels_
-            tracks_params_stereo = self.model_stereo.tracks_params_
-
-            unique, counts = numpy.unique(labels_stereo[labels_stereo != -1], return_counts=True)
-            if len(unique) != 0:
-                max_hits_track_id = unique[counts == counts.max()][0]
-                one_track_stereo = tracks_params_stereo[max_hits_track_id]
-            else:
-                max_hits_track_id = -999.
                 one_track_stereo = []
-
-            used[labels_stereo == max_hits_track_id] = 1
-
-            self.labels_[mask_stereo] = track_id * (labels_stereo == max_hits_track_id) + \
-            self.labels_[mask_stereo] * (labels_stereo != max_hits_track_id)
 
 
             self.tracks_params_.append([one_track_y, one_track_stereo])

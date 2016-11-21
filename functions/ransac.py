@@ -52,6 +52,14 @@ class RANSACTracker(object):
 
                     regressor = deepcopy(self.regressor)
                     regressor.fit(x_track.reshape(-1, 1), y_track)
+                    inlier_mask = regressor.inlier_mask_
+                    estimator = regressor.estimator_
+
+
+                    if (inlier_mask * 1).sum() >= self.min_hits:
+
+                        labels[indexes_track[inlier_mask]] = track_id
+                        tracks_params.append([estimator.coef_[0], estimator.intercept_])
                     flag = 1
 
                 except:
@@ -59,14 +67,6 @@ class RANSACTracker(object):
                     flag += -1
 
 
-            inlier_mask = regressor.inlier_mask_
-            estimator = regressor.estimator_
-
-
-            if (inlier_mask * 1).sum() >= self.min_hits:
-
-                labels[indexes_track[inlier_mask]] = track_id
-                tracks_params.append([estimator.coef_[0], estimator.intercept_])
 
 
         self.tracks_params_ = numpy.array(tracks_params)

@@ -114,6 +114,12 @@ class Retina2DTrackerOne(object):
 
         labels = -1 * numpy.ones(len(x))
         tracks_params = []
+        if len(x) == 0:
+            self.labels_ = labels
+            self.tracks_params_ = numpy.array(tracks_params)
+            return
+
+
         used = numpy.zeros(len(x))
 
         for track_id in range(self.n_tracks):
@@ -133,7 +139,7 @@ class Retina2DTrackerOne(object):
                 break
 
             one_track_params = self.fit_one_track(x_track, y_track, sample_weight_track)
-            tracks_params.append(one_track_params)
+            #tracks_params.append(one_track_params)
 
             dists = numpy.abs(one_track_params[0] * x + one_track_params[1] - y)
 
@@ -143,6 +149,12 @@ class Retina2DTrackerOne(object):
 
             labels[(dists <= self.residuals_threshold) & (used == 0)] = track_id
             used[dists <= self.residuals_threshold] = 1
+
+            if len(x[labels == track_id]) >= 2:
+                one_track_params = numpy.polyfit(x[labels == track_id], y[labels == track_id], 1)
+            else:
+                one_track_params = []
+            tracks_params.append(one_track_params)
 
 
         self.labels_ = labels
