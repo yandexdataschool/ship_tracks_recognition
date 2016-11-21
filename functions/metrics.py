@@ -4,7 +4,7 @@ import numpy
 
 
 class HitsMatchingEfficiency(object):
-    def __init__(self, eff_threshold=0.5):
+    def __init__(self, eff_threshold=0.5, n_tracks=None):
         """
         This class calculates tracks efficiencies, reconstruction efficiency, ghost rate and clone rate for one event using hits matching.
         :param eff_threshold: float, threshold value of a track efficiency to consider a track reconstructed.
@@ -12,6 +12,7 @@ class HitsMatchingEfficiency(object):
         """
 
         self.eff_threshold = eff_threshold
+        self.n_tracks = n_tracks
 
     def fit(self, true_labels, labels):
         """
@@ -50,28 +51,41 @@ class HitsMatchingEfficiency(object):
 
         # Calculate reconstruction efficiency
         true_tracks_id = numpy.unique(true_labels)
-        n_tracks = (true_tracks_id != -1).sum()
+
+        if self.n_tracks == None:
+            n_tracks = (true_tracks_id != -1).sum()
+        else:
+            n_tracks = self.n_tracks
 
         reco_tracks_id = tracks_id[efficiencies >= self.eff_threshold]
         unique, counts = numpy.unique(reco_tracks_id[reco_tracks_id != -1], return_counts=True)
 
-        recognition_efficiency = 1. * len(unique) / (n_tracks)
+        if n_tracks != 0:
+            recognition_efficiency = 1. * len(unique) / (n_tracks)
+        else:
+            recognition_efficiency = 0
         self.recognition_efficiency_ = recognition_efficiency
 
         # Calculate ghost rate
-        ghost_rate = 1. * (len(tracks_id) - len(reco_tracks_id[reco_tracks_id != -1])) / (n_tracks)
+        if n_tracks != 0:
+            ghost_rate = 1. * (len(tracks_id) - len(reco_tracks_id[reco_tracks_id != -1])) / (n_tracks)
+        else:
+            ghost_rate = 0
         self.ghost_rate_ = ghost_rate
 
         # Calculate clone rate
         reco_tracks_id = tracks_id[efficiencies >= self.eff_threshold]
         unique, counts = numpy.unique(reco_tracks_id[reco_tracks_id != -1], return_counts=True)
 
-        clone_rate = (counts - numpy.ones(len(counts))).sum() / (n_tracks)
+        if n_tracks != 0:
+            clone_rate = (counts - numpy.ones(len(counts))).sum() / (n_tracks)
+        else:
+            clone_rate = 0
         self.clone_rate_ = clone_rate
 
 
 class TracksReconstractionMetrics(object):
-    def __init__(self, eff_threshold):
+    def __init__(self, eff_threshold, n_tracks=None):
         """
         This class calculates tracks efficiencies, reconstruction efficiency, ghost rate and clone rate for one event using hits matching.
         :param eff_threshold: float, threshold value of a track efficiency to consider a track reconstructed.
@@ -79,6 +93,7 @@ class TracksReconstractionMetrics(object):
         """
 
         self.eff_threshold = eff_threshold
+        self.n_tracks = n_tracks
 
     def fit(self, labels, event):
         """
@@ -95,7 +110,7 @@ class TracksReconstractionMetrics(object):
         labels_y = labels[is_stereo == 0]
         true_labels_y = true_labels[is_stereo == 0]
 
-        hme = HitsMatchingEfficiency(self.eff_threshold)
+        hme = HitsMatchingEfficiency(self.eff_threshold, self.n_tracks)
         hme.fit(true_labels_y, labels_y)
 
         self.efficiencies_y_ = hme.efficiencies_
@@ -110,7 +125,7 @@ class TracksReconstractionMetrics(object):
         labels_stereo = labels[is_stereo == 1]
         true_labels_stereo = true_labels[is_stereo == 1]
 
-        hme = HitsMatchingEfficiency(self.eff_threshold)
+        hme = HitsMatchingEfficiency(self.eff_threshold, self.n_tracks)
         hme.fit(true_labels_stereo, labels_stereo)
 
         self.efficiencies_stereo_ = hme.efficiencies_
@@ -122,7 +137,7 @@ class TracksReconstractionMetrics(object):
 
 
         # All-views
-        hme = HitsMatchingEfficiency(self.eff_threshold)
+        hme = HitsMatchingEfficiency(self.eff_threshold, self.n_tracks)
         hme.fit(true_labels, labels)
 
         self.efficiencies_ = hme.efficiencies_
@@ -175,6 +190,8 @@ class CombinatorQuality(object):
                     true_charge = -1.
                 elif pdg_code == -13 or pdg_code == 211:
                     true_charge = 1.
+                else:
+                    true_charge = -999.
 
                 true_charges.append(true_charge)
 
