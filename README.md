@@ -2,7 +2,7 @@
 
 # Introduction
 
-The purpose of the SHiP spectrometer tracker is to reconstruct the tracks of charged particles from the decay of neutral New Physics objects with high efficiency, while rejecting background events. Additionally, the spectrometer tracker must provide as good as possible measurements of the track momentum and of the flight direction within the fiducial decay volume.
+The SHiP is a new proposed fixed-target experiment at the CERN SPS accelerator. The goal of the experiment is searching for hidden particles predicted by the models of Hidden Sectors. The purpose of the SHiP Spectrometer Tracker is to reconstruct tracks of charged particles from the decay of neutral New Physics objects with high efficiency. The problem is to develop a method of pattern recognition based on the SHiP Spectrometer Tracker design. The baseline algorithm gives efficiency of 94.1%
 
 ![track](pic/tracks.jpeg)
 
