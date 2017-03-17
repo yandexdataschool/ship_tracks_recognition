@@ -3,9 +3,88 @@ __author__ = 'mikhail91'
 from sklearn.linear_model import LinearRegression
 import numpy
 
+
+class Clusterer(object):
+
+    def __init__(self, x_depth, y_depth, n_min):
+
+        self.x_depth = x_depth
+        self.y_depth = y_depth
+        self.n_min = n_min
+        pass
+
+    @staticmethod
+    def clustering(x, indeces, clusters, depth, n_min):
+
+        if len(indeces) <= 1 or depth == 0:
+            clusters.append(indeces)
+            return
+
+        this_x = x[indeces]
+        min_x, max_x = this_x.min(), this_x.max()
+
+        if min_x == max_x:
+            clusters.append(indeces)
+            return
+
+        cut = 0.5 * (min_x + max_x)
+        left_inds = indeces[this_x < cut]
+        right_inds = indeces[this_x >= cut]
+
+        if len(left_inds) < n_min or len(right_inds) < n_min:
+            clusters.append(indeces)
+            return
+        else:
+            Clusterer.clustering(x, left_inds, clusters, depth-1, n_min)
+            Clusterer.clustering(x, right_inds, clusters, depth-1, n_min)
+
+
+    def get_labels(self, clusters, n):
+
+        labels = -1 * numpy.ones(n)
+        cluster_i = 0
+
+        if n == 0 or len(clusters) == 0:
+            return labels
+
+        for cl in clusters:
+            labels[cl] = cluster_i
+            cluster_i += 1
+
+        return labels
+
+    def get_cluster_coord(self, x, clusters):
+
+        coord = []
+
+        for cl in clusters:
+            coord.append(x[cl].mean())
+
+        return numpy.array(coord)
+
+    def fit(self, x, y):
+
+        x_clusters = []
+        self.clustering(x, numpy.arange(len(x)), x_clusters, self.x_depth, self.n_min)
+
+        clusters = []
+        cluster_x_ids = []
+        for x_num, x_cluster in enumerate(x_clusters):
+            y_clusters = []
+            self.clustering(y, x_cluster, y_clusters, self.y_depth, self.n_min)
+            clusters += list(y_clusters)
+            cluster_x_ids += [x_num] * len(y_clusters)
+
+        self.labels_ = self.get_labels(clusters, len(x))
+        self.cluster_x_ = self.get_cluster_coord(x, clusters)
+        self.cluster_y_ = self.get_cluster_coord(y, clusters)
+        self.clusters_ = clusters
+        self.cluster_x_ids_ = cluster_x_ids
+
+
 class FastHough(object):
 
-    def __init__(self, n_tracks=None, min_hits=4, k_size=0.1, b_size=10, k_limits=(-0.3, 0.3), b_limits=(-800, 800)):
+    def __init__(self, n_tracks=None, min_hits=4, k_size=0.1, b_size=10, k_limits=(-0.3, 0.3), b_limits=(-800, 800), clustering=None):
 
 
         self.n_tracks = n_tracks
@@ -17,18 +96,29 @@ class FastHough(object):
         self.k_limits = k_limits
         self.b_limits = b_limits
 
+        self.clustering = clustering
+
     def transform(self, x, y):
+
+        if self.clustering == None:
+            x_clusters = x
+            y_clusters = y
+            cluster_x_ids = x
+        else:
+            self.clustering.fit(x, y)
+            x_clusters, y_clusters = self.clustering.cluster_x_, self.clustering.cluster_y_
+            cluster_x_ids = self.clustering.cluster_x_ids_
 
         track_inds = []
 
-        for first in range(0, len(x)):
-            for second in range(first, len(x)):
+        for first in range(0, len(x_clusters)):
+            for second in range(first, len(x_clusters)):
 
-                x1, y1 = x[first], y[first]
-                x2, y2 = x[second], y[second]
+                x1, y1, layer1 = x_clusters[first], y_clusters[first], cluster_x_ids[first]
+                x2, y2, layer2 = x_clusters[second], y_clusters[second], cluster_x_ids[second]
 
-                if x1 == x2:
-                    continue
+                if layer1 == layer2:
+                   continue
 
                 k = 1. * (y2 - y1) / (x2 - x1)
                 b = y1 - k * x1
