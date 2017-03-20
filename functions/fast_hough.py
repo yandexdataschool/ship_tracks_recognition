@@ -84,7 +84,7 @@ class Clusterer(object):
 
 class FastHough(object):
 
-    def __init__(self, n_tracks=None, min_hits=4, k_size=0.1, b_size=10, k_limits=(-0.3, 0.3), b_limits=(-800, 800), clustering=None):
+    def __init__(self, n_tracks=None, min_hits=4, k_size=0.1, b_size=10, k_limits=(-0.3, 0.3), b_limits=(-800, 800), clustering=None, unique_hit_labels=True):
 
 
         self.n_tracks = n_tracks
@@ -97,6 +97,7 @@ class FastHough(object):
         self.b_limits = b_limits
 
         self.clustering = clustering
+        self.unique_hit_labels = unique_hit_labels
 
     def transform(self, x, y):
 
@@ -111,8 +112,8 @@ class FastHough(object):
 
         track_inds = []
 
-        for first in range(0, len(x_clusters)):
-            for second in range(first, len(x_clusters)):
+        for first in range(0, len(x_clusters)-1):
+            for second in range(first+1, len(x_clusters)):
 
                 x1, y1, layer1 = x_clusters[first], y_clusters[first], cluster_x_ids[first]
                 x2, y2, layer2 = x_clusters[second], y_clusters[second], cluster_x_ids[second]
@@ -150,11 +151,10 @@ class FastHough(object):
 
 
 
-    def get_hit_labels(self, track_inds, n_hits):
+    def get_unique_hit_labels(self, track_inds, n_hits):
 
-        labels = -1. * numpy.ones(n_hits)
+        new_track_inds = []
         used = numpy.zeros(n_hits)
-        track_id = 0
         n_tracks = 0
 
 
@@ -174,32 +174,28 @@ class FastHough(object):
             one_track_inds = one_track_inds[used[one_track_inds] == 0]
 
             used[one_track_inds] = 1
-            labels[one_track_inds] = track_id
-            track_id += 1
+            new_track_inds.append(one_track_inds)
 
             n_tracks += 1
             if self.n_tracks != None and n_tracks >= self.n_tracks:
                 break
 
-        return numpy.array(labels)
+        return numpy.array(new_track_inds)
 
-    def get_tracks_params(self, x, y, labels, sample_weight=None):
+    def get_tracks_params(self, x, y, track_inds, sample_weight=None):
 
         tracks_params = []
 
-        unique_labels = numpy.unique(labels)
-        track_ids = unique_labels[unique_labels != -1]
-
-        if len(track_ids) == 0:
+        if len(track_inds) == 0:
             return []
 
-        for track_id in track_ids:
+        for track in track_inds:
 
-            x_track = x[labels == track_id]
-            y_track = y[labels == track_id]
+            x_track = x[track]
+            y_track = y[track]
 
             if sample_weight != None:
-                sample_weight_track = sample_weight[labels == track_id]
+                sample_weight_track = sample_weight[track]
             else:
                 sample_weight_track = None
 
@@ -216,7 +212,10 @@ class FastHough(object):
 
         track_inds = self.transform(x, y)
 
-        self.track_inds_ = track_inds
-        self.labels_ = self.get_hit_labels(self.track_inds_, len(x))
-        self.tracks_params_ = self.get_tracks_params(x, y, self.labels_, sample_weight)
+        if self.unique_hit_labels:
+            self.track_inds_ = self.get_unique_hit_labels(track_inds, len(x))
+        else:
+            self.track_inds_ = track_inds
+
+        self.tracks_params_ = self.get_tracks_params(x, y, self.track_inds_, sample_weight)
 

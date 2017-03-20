@@ -14,31 +14,28 @@ class HitsMatchingEfficiency(object):
         self.eff_threshold = eff_threshold
         self.n_tracks = n_tracks
 
-    def fit(self, true_labels, labels):
+    def fit(self, true_labels, track_inds):
         """
         The method calculates all metrics.
         :param true_labels: numpy.array, true labels of the hits.
-        :param labels: numpy.array, recognized labels of the hits.
+        :param track_inds: numpy.array, hits of recognized tracks.
         :return:
         """
-
-        unique_labels = numpy.unique(labels)
 
         # Calculate efficiencies
         efficiencies = []
         tracks_id = []
 
-        for lab in unique_labels:
+        for one_track_inds in track_inds:
 
-            if lab != -1:
-                track = true_labels[labels == lab]
-                # if len(track[track != -1]) == 0:
-                #    continue
-                unique, counts = numpy.unique(track, return_counts=True)
+            track = true_labels[one_track_inds]
+            # if len(track[track != -1]) == 0:
+            #    continue
+            unique, counts = numpy.unique(track, return_counts=True)
 
+            if len(track) != 0:
                 eff = 1. * counts.max() / len(track)
                 efficiencies.append(eff)
-
                 tracks_id.append(unique[counts == counts.max()][0])
 
         tracks_id = numpy.array(tracks_id)
@@ -95,10 +92,10 @@ class TracksReconstractionMetrics(object):
         self.eff_threshold = eff_threshold
         self.n_tracks = n_tracks
 
-    def fit(self, labels, event):
+    def fit(self, track_inds, event):
         """
         The method calculates all metrics.
-        :param labels: numpy.array, recognized labels of the hits.
+        :param track_inds: numpy.array, hits of recognized tracks.
         :param event: pandas.DataFrame, active straw tubes with Label and IsStereo columns.
         :return:
         """
@@ -107,11 +104,10 @@ class TracksReconstractionMetrics(object):
         is_stereo = event.IsStereo.values
 
         # Y-views
-        labels_y = labels[is_stereo == 0]
         true_labels_y = true_labels[is_stereo == 0]
 
         hme = HitsMatchingEfficiency(self.eff_threshold, self.n_tracks)
-        hme.fit(true_labels_y, labels_y)
+        hme.fit(true_labels, track_inds[:, 0])
 
         self.efficiencies_y_ = hme.efficiencies_
         self.avg_efficiency_y_ = hme.avg_efficiency_
@@ -122,11 +118,10 @@ class TracksReconstractionMetrics(object):
 
 
         # Stereo-views
-        labels_stereo = labels[is_stereo == 1]
         true_labels_stereo = true_labels[is_stereo == 1]
 
         hme = HitsMatchingEfficiency(self.eff_threshold, self.n_tracks)
-        hme.fit(true_labels_stereo, labels_stereo)
+        hme.fit(true_labels, track_inds[:, 1])
 
         self.efficiencies_stereo_ = hme.efficiencies_
         self.avg_efficiency_stereo_ = hme.avg_efficiency_
@@ -137,8 +132,9 @@ class TracksReconstractionMetrics(object):
 
 
         # All-views
+        united_inds = numpy.array([numpy.concatenate((i[0], i[1])) for i in track_inds])
         hme = HitsMatchingEfficiency(self.eff_threshold, self.n_tracks)
-        hme.fit(true_labels, labels)
+        hme.fit(true_labels, united_inds)
 
         self.efficiencies_ = hme.efficiencies_
         self.avg_efficiency_ = hme.avg_efficiency_
@@ -152,7 +148,7 @@ class CombinatorQuality(object):
 
         pass
 
-    def fit(self, labels_before, labels_after, tracks_combinations, charges, inv_momentums, event_before, event_after):
+    def fit(self, track_inds_before, track_inds_after, tracks_combinations, charges, inv_momentums, event_before, event_after):
 
         true_labels_before = event_before.Label.values
         true_labels_after = event_after.Label.values
@@ -170,11 +166,15 @@ class CombinatorQuality(object):
             track_id_before = one_tracks_combination[0]
             track_id_after = one_tracks_combination[1]
 
-            unique_before, counts_before = numpy.unique(true_labels_before[labels_before == track_id_before],
+            inds = track_inds_before[track_id_before]
+            inds_before = numpy.concatenate((inds[0], inds[1]))
+            unique_before, counts_before = numpy.unique(true_labels_before[inds_before],
                                                         return_counts=True)
             max_fraction_true_label_before = unique_before[counts_before == counts_before.max()][0]
 
-            unique_after, counts_after = numpy.unique(true_labels_after[labels_after == track_id_after],
+            inds = track_inds_after[track_id_after]
+            inds_after = numpy.concatenate((inds[0], inds[1]))
+            unique_after, counts_after = numpy.unique(true_labels_after[inds_after],
                                                       return_counts=True)
             max_fraction_true_label_after = unique_after[counts_after == counts_after.max()][0]
 
