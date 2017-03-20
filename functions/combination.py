@@ -70,7 +70,7 @@ class Combinator(object):
                     self.dy.append(y_after - y_before)
 
                     tracks_combinations.append(numpy.array([track_id_before, track_id_after]))
-                    continue
+                    #continue
 
         return numpy.array(tracks_combinations)
 
@@ -419,3 +419,58 @@ class MomentumCorrecter(object):
             inv_momentums.append(pinv)
 
         self.inv_momentums_ = numpy.array(inv_momentums)
+
+
+class SimplifiedCombinator(object):
+
+    def __init__(self, z_magnet=3070., magnetic_field=-0.75, dy_max=2.):
+        """
+        This class combines tracks before and after the magnet,
+        estimates a particles charge and momentim based on its deflection in the magnetic field.
+        :param z_magnet: floaf, z-coordinate of the center of the magnet.
+        :param magnetic_field: float, inductivity of the magnetic field.
+        :param dy_max: float, max distance on y between the tracks before and after the magnet in center of the magnet.
+        :param dx_max: float, max distance on x between the tracks before and after the magnet in center of the magnet.
+        :return:
+        """
+
+        self.z_magnet = z_magnet
+        self.magnetic_field = magnetic_field
+        self.dy_max = dy_max
+
+    def get_tracks_combination(self, tracks_before, tracks_after):
+        """
+        This function combines the two tracks.
+        :param tracks_before: list of [k_yz, b_yz], parameters of the track before the magnet. y = kx + b.
+        :param tracks_after: list, [k_yz, b_yz], parameters of the track after the magnet. y = kx + b.
+        :return: list of [track_id_before, track_id_after]
+        """
+
+        z_magnet = self.z_magnet
+        dy_max = self.dy_max
+
+        self.dy = []
+
+        tracks_combinations = []
+
+        for track_id_before, one_track_before in enumerate(tracks_before):
+
+            for track_id_after, one_track_after in enumerate(tracks_after):
+
+
+                if len(one_track_before)==0 or len(one_track_after)==0:
+                    continue
+
+                y_before = z_magnet * one_track_before[0] + one_track_before[1]
+                y_after = z_magnet * one_track_after[0] + one_track_after[1]
+
+                dy = numpy.abs(y_after - y_before)
+
+                if dy <= dy_max:
+
+                    self.dy.append(y_after - y_before)
+
+                    tracks_combinations.append(numpy.array([track_id_before, track_id_after]))
+                    #continue
+
+        return numpy.array(tracks_combinations)

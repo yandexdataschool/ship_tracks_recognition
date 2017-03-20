@@ -185,6 +185,10 @@ class FastHough(object):
     def remove_duplicates(self, track_inds):
 
         new_track_inds = []
+
+        if len(track_inds) == 0:
+            return numpy.array(new_track_inds)
+
         sorted_track_inds = [numpy.sort(track) for track in track_inds]
 
         for first_id in range(len(track_inds)-1):
