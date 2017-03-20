@@ -182,6 +182,29 @@ class FastHough(object):
 
         return numpy.array(new_track_inds)
 
+    def remove_duplicates(self, track_inds):
+
+        new_track_inds = []
+        sorted_track_inds = [numpy.sort(track) for track in track_inds]
+
+        for first_id in range(len(track_inds)-1):
+
+            counter = 0
+            first = sorted_track_inds[first_id]
+
+            for second_id in range(first_id+1, len(track_inds)):
+
+                second = sorted_track_inds[second_id]
+                if list(first) == list(second):
+                    counter += 1
+
+            if counter == 0:
+                new_track_inds.append(first)
+
+        new_track_inds.append(sorted_track_inds[-1])
+
+        return numpy.array(new_track_inds)
+
     def get_tracks_params(self, x, y, track_inds, sample_weight=None):
 
         tracks_params = []
@@ -215,7 +238,7 @@ class FastHough(object):
         if self.unique_hit_labels:
             self.track_inds_ = self.get_unique_hit_labels(track_inds, len(x))
         else:
-            self.track_inds_ = track_inds
+            self.track_inds_ = self.remove_duplicates(track_inds)
 
         self.tracks_params_ = self.get_tracks_params(x, y, self.track_inds_, sample_weight)
 
