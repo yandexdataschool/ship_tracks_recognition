@@ -1,20 +1,7 @@
 __author__ = 'mikhail91'
 
-from ReconstructibleTracks import get_reconstractible_tracks
 import numpy
 
-def get_reconstractible_events(event_ids, all_hits, all_mctracks, all_velo_points):
-
-    reconstructible_events = {}
-
-    for event_id in event_ids:
-
-        tracks = get_reconstractible_tracks(event_id, all_hits, all_mctracks, all_velo_points)
-
-        if tracks != []:
-            reconstructible_events[event_id] = tracks
-
-    return reconstructible_events
 
 
 def get_tracks_params(reconstructible_events, stations, plane, all_hits):
