@@ -142,7 +142,7 @@ class TracksReconstruction2D(object):
 
         for track_id in range(len(track_inds)):
 
-            for i in enumerate(track_inds[track_id]):
+            for i, k in enumerate(track_inds[track_id]):
 
                 track_inds[track_id][i] = indeces[track_inds[track_id][i]]
 
