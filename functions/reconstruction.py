@@ -138,6 +138,17 @@ class TracksReconstruction2D(object):
 
         return track_inds, tracks_params
 
+    def global_indeces(self, track_inds, indeces):
+
+        for track_id in range(len(track_inds)):
+
+            for i in enumerate(track_inds[track_id]):
+
+                track_inds[track_id][i] = indeces[track_inds[track_id][i]]
+
+        return track_inds
+
+
     def predict(self, X, sample_weight=None):
         """
         Fit of the models.
@@ -154,6 +165,9 @@ class TracksReconstruction2D(object):
 
         is_stereo12 = is_stereo[(statnb == 1) + (statnb == 2)]
         is_stereo34 = is_stereo[(statnb == 3) + (statnb == 4)]
+
+        indeces12 = numpy.arange(len(X))[(statnb == 1) + (statnb == 2)]
+        indeces34 = numpy.arange(len(X))[(statnb == 3) + (statnb == 4)]
 
         if sample_weight == None:
             weights12 = None
@@ -174,5 +188,9 @@ class TracksReconstruction2D(object):
         self.track_inds12_, self.tracks_params12_ = self.stereo_track_recognition(X12, is_stereo12, track_inds_y12, track_params_y12, sample_weight=weights12)
         self.track_inds34_, self.tracks_params34_ = self.stereo_track_recognition(X34, is_stereo34, track_inds_y34, track_params_y34, sample_weight=weights34)
 
+        ########################################Get global indeces of the hits##########################################
+
+        self.track_inds12_ = self.global_indeces(self.track_inds12_, indeces12)
+        self.track_inds34_ = self.global_indeces(self.track_inds34_, indeces34)
 
 
