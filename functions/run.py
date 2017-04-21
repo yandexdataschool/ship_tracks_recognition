@@ -78,7 +78,7 @@ def run_track_pattern_recognition(input_file, geo_file, dy, model='FastHough'):
     TStation1StartZ, \
     TStation4EndZ, \
     VetoStationZ, \
-    VetoStationEndZ = initialize(fgeo)
+    VetoStationEndZ = initialize(fgeo, ShipGeo)
 
 
     ########################################## Start Track Pattern Recognition #########################################
