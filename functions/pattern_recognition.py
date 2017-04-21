@@ -6,7 +6,7 @@ import numpy
 import sys
 sys.path.append('/models')
 
-from recognition2d import TracksRecognition2D
+from recognition import TracksRecognition2D
 from fast_hough import Clusterer, FastHough
 from combinator import Combinator
 
