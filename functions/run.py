@@ -103,6 +103,9 @@ def run_track_pattern_recognition(input_file, geo_file, dy, model='FastHough'):
         # Smear hits of the event. Only for MC data.
         smeared_hits = smearHits(sTree, ShipGeo, modules, no_amb=None)
 
+        if len(smeared_hits) == 0:
+            continue
+
         # Do Track Pattern Recognition
         reco_tracks, \
         theTracks, \
