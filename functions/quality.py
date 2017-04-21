@@ -88,8 +88,11 @@ def get_charges(stree, smeared_hits):
 
     for i in range(len(smeared_hits)):
 
-        pdg = stree.strawtubesPoint[i].PdgCode()
-        acharge = PDG.GetParticle(pdg).Charge() / 3.
+        try:
+            pdg = stree.strawtubesPoint[i].PdgCode()
+            acharge = PDG.GetParticle(pdg).Charge() / 3.
+        except:
+            acharge = -999
         charges.append(acharge)
 
     return numpy.array(charges)
