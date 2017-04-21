@@ -3,12 +3,15 @@ __author__ = 'Mikhail Hushchyn'
 
 import numpy
 
-import sys
-sys.path.append('/models')
+import sys, os
+
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+utils_path = os.path.join(DIR_PATH, 'models/')
+sys.path.insert(0, utils_path)
 
 from recognition import TracksRecognition2D
 from fast_hough import Clusterer, FastHough
-from combinator import Combinator
+from combination import Combinator
 
 def track_pattern_recognition(X, z_magnet, method='FastHough'):
 
