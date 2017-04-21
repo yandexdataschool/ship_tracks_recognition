@@ -4,7 +4,136 @@ __author__ = 'Mikhail Hushchyn'
 import ROOT
 import numpy
 import rootUtils as ut
-from metrics import  HitsMatchingEfficiency
+
+from utils import fracMCsame
+from digitization import Digitization
+from mctruth import get_track_ids
+
+################################################ Helping functions #####################################################
+
+class HitsMatchingEfficiency(object):
+    def __init__(self, eff_threshold=0.5, n_tracks=None):
+        """
+        This class calculates tracks efficiencies, reconstruction efficiency, ghost rate and clone rate for one event using hits matching.
+        :param eff_threshold: float, threshold value of a track efficiency to consider a track reconstructed.
+        :return:
+        """
+
+        self.eff_threshold = eff_threshold
+        self.n_tracks = n_tracks
+
+    def fit(self, true_labels, track_inds):
+        """
+        The method calculates all metrics.
+        :param true_labels: numpy.array, true labels of the hits.
+        :param track_inds: numpy.array, hits of recognized tracks.
+        :return:
+        """
+
+        # Calculate efficiencies
+        efficiencies = []
+        tracks_id = []
+
+        for one_track_inds in track_inds:
+
+            track = true_labels[one_track_inds]
+            # if len(track[track != -1]) == 0:
+            #    continue
+            unique, counts = numpy.unique(track, return_counts=True)
+
+            if len(track) != 0:
+                eff = 1. * counts.max() / len(track)
+                efficiencies.append(eff)
+                tracks_id.append(unique[counts == counts.max()][0])
+
+        tracks_id = numpy.array(tracks_id)
+        efficiencies = numpy.array(efficiencies)
+        self.efficiencies_ = efficiencies
+
+        # Calculate avg. efficiency
+        avg_efficiency = efficiencies.mean()
+        self.avg_efficiency_ = avg_efficiency
+
+        # Calculate reconstruction efficiency
+        true_tracks_id = numpy.unique(true_labels)
+
+        if self.n_tracks == None:
+            n_tracks = (true_tracks_id != -1).sum()
+        else:
+            n_tracks = self.n_tracks
+
+        reco_tracks_id = tracks_id[efficiencies >= self.eff_threshold]
+        unique, counts = numpy.unique(reco_tracks_id[reco_tracks_id != -1], return_counts=True)
+
+        if n_tracks != 0:
+            recognition_efficiency = 1. * len(unique) / (n_tracks)
+        else:
+            recognition_efficiency = 0
+        self.recognition_efficiency_ = recognition_efficiency
+
+        # Calculate ghost rate
+        if n_tracks != 0:
+            ghost_rate = 1. * (len(tracks_id) - len(reco_tracks_id[reco_tracks_id != -1])) / (n_tracks)
+        else:
+            ghost_rate = 0
+        self.ghost_rate_ = ghost_rate
+
+        # Calculate clone rate
+        reco_tracks_id = tracks_id[efficiencies >= self.eff_threshold]
+        unique, counts = numpy.unique(reco_tracks_id[reco_tracks_id != -1], return_counts=True)
+
+        if n_tracks != 0:
+            clone_rate = (counts - numpy.ones(len(counts))).sum() / (n_tracks)
+        else:
+            clone_rate = 0
+        self.clone_rate_ = clone_rate
+
+
+def select_track_hits(track_inds, selection):
+
+    new_track_inds = []
+
+    for atrack in track_inds:
+
+        atrack = numpy.array(atrack)
+        mask = selection[atrack]
+        new_track_inds.append(atrack[mask])
+
+    return numpy.array(new_track_inds)
+
+def get_charges(stree, smeared_hits):
+
+    PDG=ROOT.TDatabasePDG.Instance()
+
+    charges = []
+
+    for i in range(len(smeared_hits)):
+
+        try:
+            pdg = stree.strawtubesPoint[i].PdgCode()
+            acharge = PDG.GetParticle(pdg).Charge() / 3.
+        except:
+            acharge = -999
+        charges.append(acharge)
+
+    return numpy.array(charges)
+
+def get_pinvs(stree, smeared_hits):
+
+    pinvs = []
+
+    for i in range(len(smeared_hits)):
+
+        px = stree.strawtubesPoint[i].GetPx()
+        py = stree.strawtubesPoint[i].GetPy()
+        pz = stree.strawtubesPoint[i].GetPz()
+        apinv = 1. / numpy.sqrt(px**2 + py**2 + pz**2)
+        pinvs.append(apinv)
+
+    return numpy.array(pinvs)
+
+
+########################################## Main functions ##############################################################
 
 def save_hists(h, path):
     ut.writeHists(h, path)
@@ -67,51 +196,6 @@ def decodeDetectorID(detID):
     snb = detID - statnb * 10000000 - vnb * 1000000 - pnb * 100000 - lnb * 10000 - 2000
 
     return statnb, vnb, pnb, lnb, snb
-
-def select_track_hits(track_inds, selection):
-
-    new_track_inds = []
-
-    for atrack in track_inds:
-
-        atrack = numpy.array(atrack)
-        mask = selection[atrack]
-        new_track_inds.append(atrack[mask])
-
-    return numpy.array(new_track_inds)
-
-def get_charges(stree, smeared_hits):
-
-    PDG=ROOT.TDatabasePDG.Instance()
-
-    charges = []
-
-    for i in range(len(smeared_hits)):
-
-        try:
-            pdg = stree.strawtubesPoint[i].PdgCode()
-            acharge = PDG.GetParticle(pdg).Charge() / 3.
-        except:
-            acharge = -999
-        charges.append(acharge)
-
-    return numpy.array(charges)
-
-def get_pinvs(stree, smeared_hits):
-
-    pinvs = []
-
-    for i in range(len(smeared_hits)):
-
-        px = stree.strawtubesPoint[i].GetPx()
-        py = stree.strawtubesPoint[i].GetPy()
-        pz = stree.strawtubesPoint[i].GetPz()
-        apinv = 1. / numpy.sqrt(px**2 + py**2 + pz**2)
-        pinvs.append(apinv)
-
-    return numpy.array(pinvs)
-
-from utils import fracMCsame, Digitization, get_track_ids
 
 def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
 

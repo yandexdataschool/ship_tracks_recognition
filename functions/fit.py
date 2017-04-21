@@ -2,6 +2,8 @@ __author__ = 'Mikhail Hushchyn'
 
 import ROOT
 import numpy
+from array import array
+import shipunit  as u
 
 def prepare_theTrack(ShipGeo, hitPosList, charge, pinv):
 
@@ -32,9 +34,6 @@ def prepare_theTrack(ShipGeo, hitPosList, charge, pinv):
 
     return theTrack
 
-from array import array
-import shipunit  as u
-import math
 
 def TrackFit(ShipGeo, fitter, hitPosList, theTrack, theTracks):
     debug=1
@@ -74,7 +73,18 @@ def TrackFit(ShipGeo, fitter, hitPosList, theTrack, theTracks):
 
     return
 
-def track_fit(ShipGeo, fitter, reco_tracks):
+def track_fit(ShipGeo, reco_tracks):
+
+    ########################################### Select a track fitter ##################################################
+
+    geoMat =  ROOT.genfit.TGeoMaterialInterface()
+    bfield = ROOT.genfit.BellField(ShipGeo.Bfield.max ,ShipGeo.Bfield.z,2, ShipGeo.Yheight/2.*u.m)
+    fM = ROOT.genfit.FieldManager.getInstance()
+    fM.init(bfield)
+    ROOT.genfit.MaterialEffects.getInstance().init(geoMat)
+    fitter = ROOT.genfit.DAF()
+
+    ########################################### Fit recognized tracks ##################################################
 
     theTracks = []
 
@@ -92,3 +102,5 @@ def track_fit(ShipGeo, fitter, reco_tracks):
                  theTracks)
 
     return theTracks
+
+

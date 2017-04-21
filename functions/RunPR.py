@@ -14,7 +14,9 @@ from rootpyPickler import Unpickler
 import shipDet_conf
 
 # For track pattern recognition
-from utils import initialize, getReconstructibleTracks, smearHits
+from geo_init import initialize
+from mctruth import getReconstructibleTracks, get_fitted_trackids, get_track_ids
+from smear_hits import smearHits
 from execute import execute
 
 # For track pattern recognition quality measure
@@ -22,7 +24,7 @@ from quality import init_book_hist, quality_metrics, save_hists
 
 
 
-def run_track_pattern_recognition(input_file, geo_file, dy, model='FastHough'):
+def run_track_pattern_recognition(input_file, geo_file, dy, reconstructiblerequired, threeprong):
 
 
     ############################################# Load SHiP geometry ###################################################
@@ -88,35 +90,50 @@ def run_track_pattern_recognition(input_file, geo_file, dy, model='FastHough'):
 
     # Start event loop
     nEvents   = sTree.GetEntries()
+
     for iEvent in range(nEvents):
 
         if iEvent%10 == 0:
             print 'Event ', iEvent
 
-        # Take one event
+        ########################################### Select one event ###################################################
+
         rc = sTree.GetEvent(iEvent)
 
-        # Find reconstructible tracks in the event
-        reco_mc_tracks = getReconstructibleTracks(iEvent, sTree, sGeo, 2, 0,
-                                                  TStation1StartZ, TStation4EndZ, VetoStationZ, VetoStationEndZ) # TODO:!!!
+        ########################################### Smear hits #########################################################
 
-        # Smear hits of the event. Only for MC data.
         smeared_hits = smearHits(sTree, ShipGeo, modules, no_amb=None)
 
         if len(smeared_hits) == 0:
             continue
 
-        # Do Track Pattern Recognition
-        reco_tracks, \
-        theTracks, \
-        fittedtrackids, \
-        fittedtrackfrac = execute(smeared_hits, sTree, reco_mc_tracks, ShipGeo)
+        ########################################### Do track pattern recognition #######################################
 
-        # Measure Track Pattern Recognition Quality
+        reco_tracks, theTracks  = execute(smeared_hits, sTree, ShipGeo)
+
+        ########################################### Get MC truth #######################################################
+
+        y = get_track_ids(sTree, smeared_hits)
+
+        fittedtrackids, fittedtrackfrac = get_fitted_trackids(y, reco_tracks)
+
+        reco_mc_tracks = getReconstructibleTracks(iEvent,
+                                                  sTree,
+                                                  sGeo,
+                                                  reconstructiblerequired,
+                                                  threeprong,
+                                                  TStation1StartZ,
+                                                  TStation4EndZ,
+                                                  VetoStationZ,
+                                                  VetoStationEndZ) # TODO:!!!
+
+        ########################################### Measure quality metrics ############################################
+
         quality_metrics(smeared_hits, sTree, reco_mc_tracks, reco_tracks, h)
 
 
-    # Save results
+    ############################################### Save results #######################################################
+
     save_hists(h, 'hists.root')
 
 
@@ -127,6 +144,8 @@ if __name__ == "__main__":
     input_file = None
     geo_file = None
     dy = None
+    reconstructiblerequired = 2
+    threeprong = 0
     model = None
 
 
@@ -139,8 +158,8 @@ if __name__ == "__main__":
       '''
 
     try:
-        opts, args = getopt.getopt(argv, "hm:i:g:",
-                                   ["help", "model=", "input=", "geo="])
+        opts, args = getopt.getopt(argv, "hm:i:g:y:n:t:",
+                                   ["help", "model=", "input=", "geo=", "dy=", "n_reco=", "three="])
     except getopt.GetoptError:
         print "Wrong options were used. Please, read the following help:\n"
         print msg
@@ -158,8 +177,12 @@ if __name__ == "__main__":
             input_file = arg
         elif opt in ("-g", "--geo"):
             geo_file = arg
+        elif opt in ("-y", "--dy"):
+            dy = float(arg)
+        elif opt in ("-n", "--n_reco"):
+            reconstructiblerequired = int(arg)
+        elif opt in ("-t", "--three"):
+            threeprong = int(arg)
 
 
-    run_track_pattern_recognition(input_file, geo_file, dy, model='FastHough')
-
-
+    run_track_pattern_recognition(input_file, geo_file, dy, reconstructiblerequired, threeprong)
