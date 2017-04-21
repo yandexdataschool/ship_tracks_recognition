@@ -220,7 +220,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
 
 
     # Y view station 1&2
-    hme_y12 = HitsMatchingEfficiency(eff_threshold=0.2, n_tracks=2)
+    hme_y12 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_y12.fit(y, track_inds_y12)
     reco_eff = hme_y12.recognition_efficiency_
     ghost_rate = hme_y12.ghost_rate_
@@ -234,7 +234,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_y12'].Fill(i)
 
     # Stereo views station 1&2
-    hme_stereo12 = HitsMatchingEfficiency(eff_threshold=0.2, n_tracks=2)
+    hme_stereo12 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_stereo12.fit(y, track_inds_stereo12)
     reco_eff = hme_stereo12.recognition_efficiency_
     ghost_rate = hme_stereo12.ghost_rate_
@@ -248,7 +248,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_stereo12'].Fill(i)
 
     # Station 1&2
-    hme_12 = HitsMatchingEfficiency(eff_threshold=0.2, n_tracks=2)
+    hme_12 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_12.fit(y, track_inds_12)
     reco_eff = hme_12.recognition_efficiency_
     ghost_rate = hme_12.ghost_rate_
@@ -262,7 +262,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_12'].Fill(i)
 
     # Y view station 3&4
-    hme_y34 = HitsMatchingEfficiency(eff_threshold=0.2, n_tracks=2)
+    hme_y34 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_y34.fit(y, track_inds_y34)
     reco_eff = hme_y34.recognition_efficiency_
     ghost_rate = hme_y34.ghost_rate_
@@ -276,7 +276,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_y34'].Fill(i)
 
     # Stereo views station 3&4
-    hme_stereo34 = HitsMatchingEfficiency(eff_threshold=0.2, n_tracks=2)
+    hme_stereo34 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_stereo34.fit(y, track_inds_stereo34)
     reco_eff = hme_stereo34.recognition_efficiency_
     ghost_rate = hme_stereo34.ghost_rate_
@@ -290,7 +290,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_stereo34'].Fill(i)
 
     # Station 3&4
-    hme_34 = HitsMatchingEfficiency(eff_threshold=0.2, n_tracks=2)
+    hme_34 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_34.fit(y, track_inds_34)
     reco_eff = hme_34.recognition_efficiency_
     ghost_rate = hme_34.ghost_rate_
@@ -342,7 +342,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     if len(reco_mc_tracks) == 2:
         h['EventsPassed'].Fill("Reconstructible tracks", 1)
 
-        if hme_y12.recognition_efficiency_ == 1:
+        if hme_y12.recognition_efficiency_ == 1: # TODO:!!!!
             h['EventsPassed'].Fill("Y view station 1&2", 1)
 
             if hme_stereo12.recognition_efficiency_ == 1:
