@@ -156,6 +156,7 @@ if __name__ == "__main__":
       python RunPR.py [options] \n\
     Example: \n\
       python RunPR.py -i "ship.conical.Pythia8-TGeant4.root" -g "geofile_full.conical.Pythia8-TGeant4.root"
+    Options:
       -i  --input                   : Input file path
       -g  --geo                     : Path to geo file
       -y  --dy                      : dy
