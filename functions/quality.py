@@ -234,7 +234,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_y12'].Fill(i)
 
     track_ids_y12 = []
-    for atrack in track_ids_y12:
+    for atrack in track_inds_y12:
 
         frac, tmax = fracMCsame(y[atrack])
         track_ids_y12.append(tmax)
@@ -255,7 +255,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_stereo12'].Fill(i)
 
     track_ids_stereo12 = []
-    for atrack in track_ids_stereo12:
+    for atrack in track_inds_stereo12:
 
         frac, tmax = fracMCsame(y[atrack])
         track_ids_stereo12.append(tmax)
@@ -275,7 +275,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_12'].Fill(i)
 
     track_ids_12 = []
-    for atrack in track_ids_12:
+    for atrack in track_inds_12:
 
         frac, tmax = fracMCsame(y[atrack])
         track_ids_12.append(tmax)
@@ -295,7 +295,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_y34'].Fill(i)
 
     track_ids_y34 = []
-    for atrack in track_ids_y34:
+    for atrack in track_inds_y34:
 
         frac, tmax = fracMCsame(y[atrack])
         track_ids_y34.append(tmax)
@@ -315,7 +315,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_stereo34'].Fill(i)
 
     track_ids_stereo34 = []
-    for atrack in track_ids_stereo34:
+    for atrack in track_inds_stereo34:
 
         frac, tmax = fracMCsame(y[atrack])
         track_ids_stereo34.append(tmax)
@@ -335,7 +335,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
         h['TrackEff_34'].Fill(i)
 
     track_ids_34 = []
-    for atrack in track_ids_34:
+    for atrack in track_inds_34:
 
         frac, tmax = fracMCsame(y[atrack])
         track_ids_34.append(tmax)
