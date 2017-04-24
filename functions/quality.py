@@ -233,6 +233,13 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     for i in track_eff:
         h['TrackEff_y12'].Fill(i)
 
+    track_ids_y12 = []
+    for atrack in track_ids_y12:
+
+        frac, tmax = fracMCsame(y[atrack])
+        track_ids_y12.append(tmax)
+
+
     # Stereo views station 1&2
     hme_stereo12 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_stereo12.fit(y, track_inds_stereo12)
@@ -246,6 +253,12 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     h['CloneRate_stereo12'].Fill(clone_rate)
     for i in track_eff:
         h['TrackEff_stereo12'].Fill(i)
+
+    track_ids_stereo12 = []
+    for atrack in track_ids_stereo12:
+
+        frac, tmax = fracMCsame(y[atrack])
+        track_ids_stereo12.append(tmax)
 
     # Station 1&2
     hme_12 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
@@ -261,6 +274,12 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     for i in track_eff:
         h['TrackEff_12'].Fill(i)
 
+    track_ids_12 = []
+    for atrack in track_ids_12:
+
+        frac, tmax = fracMCsame(y[atrack])
+        track_ids_12.append(tmax)
+
     # Y view station 3&4
     hme_y34 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_y34.fit(y, track_inds_y34)
@@ -274,6 +293,12 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     h['CloneRate_y34'].Fill(clone_rate)
     for i in track_eff:
         h['TrackEff_y34'].Fill(i)
+
+    track_ids_y34 = []
+    for atrack in track_ids_y34:
+
+        frac, tmax = fracMCsame(y[atrack])
+        track_ids_y34.append(tmax)
 
     # Stereo views station 3&4
     hme_stereo34 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
@@ -289,6 +314,12 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     for i in track_eff:
         h['TrackEff_stereo34'].Fill(i)
 
+    track_ids_stereo34 = []
+    for atrack in track_ids_stereo34:
+
+        frac, tmax = fracMCsame(y[atrack])
+        track_ids_stereo34.append(tmax)
+
     # Station 3&4
     hme_34 = HitsMatchingEfficiency(eff_threshold=0.5, n_tracks=None)
     hme_34.fit(y, track_inds_34)
@@ -302,6 +333,12 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     h['CloneRate_34'].Fill(clone_rate)
     for i in track_eff:
         h['TrackEff_34'].Fill(i)
+
+    track_ids_34 = []
+    for atrack in track_ids_34:
+
+        frac, tmax = fracMCsame(y[atrack])
+        track_ids_34.append(tmax)
 
     # Track combinations
     combinations = []
@@ -342,22 +379,22 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     if len(reco_mc_tracks) == 2:
         h['EventsPassed'].Fill("Reconstructible tracks", 1)
 
-        if hme_y12.recognition_efficiency_ == 1: # TODO:!!!!
+        if len(numpy.intersect1d(track_ids_y12, reco_mc_tracks)) == len(reco_mc_tracks): # TODO:!!!!
             h['EventsPassed'].Fill("Y view station 1&2", 1)
 
-            if hme_stereo12.recognition_efficiency_ == 1:
+            if len(numpy.intersect1d(track_ids_stereo12, reco_mc_tracks)) == len(reco_mc_tracks):
                 h['EventsPassed'].Fill("Stereo station 1&2", 1)
 
-                if hme_12.recognition_efficiency_ == 1:
+                if len(numpy.intersect1d(track_ids_12, reco_mc_tracks)) == len(reco_mc_tracks):
                     h['EventsPassed'].Fill("station 1&2", 1)
 
-                    if hme_y34.recognition_efficiency_ == 1:
+                    if len(numpy.intersect1d(track_ids_y34, reco_mc_tracks)) == len(reco_mc_tracks):
                         h['EventsPassed'].Fill("Y view station 3&4", 1)
 
-                        if hme_stereo34.recognition_efficiency_ == 1:
+                        if len(numpy.intersect1d(track_ids_stereo34, reco_mc_tracks)) == len(reco_mc_tracks):
                             h['EventsPassed'].Fill("Stereo station 3&4", 1)
 
-                            if hme_34.recognition_efficiency_ == 1:
+                            if len(numpy.intersect1d(track_ids_34, reco_mc_tracks)) == len(reco_mc_tracks):
                                 h['EventsPassed'].Fill("station 3&4", 1)
 
                                 if is_combined == 1:
