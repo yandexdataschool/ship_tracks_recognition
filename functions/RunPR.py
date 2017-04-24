@@ -151,9 +151,16 @@ if __name__ == "__main__":
 
     argv = sys.argv[1:]
 
-    msg = '''Predicts PID MVA outputs for a given input file.\n\
+    msg = '''Runs ship track pattern recognition.\n\
     Usage:\n\
-      python run.py [options] \n\
+      python RunPR.py [options] \n\
+    Example: \n\
+      python RunPR.py -i "ship.conical.Pythia8-TGeant4.root" -g "geofile_full.conical.Pythia8-TGeant4.root"
+      -i  --input                   : Input file path
+      -g  --geo                     : Path to geo file
+      -y  --dy                      : dy
+      -n  --n_reco                  : NUmber of reconstructible tracks per event is required
+      -t  --three                   : Is threeprong mumunu decay?
       -h  --help                    : Shows this help
       '''
 
