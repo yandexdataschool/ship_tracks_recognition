@@ -142,6 +142,9 @@ def init_book_hist():
 
     h={} #dictionary of histograms
 
+    ut.bookHist(h,'NTracks', 'Number of tracks in an event',20,0.,20.01)
+    ut.bookHist(h,'NRecoTracks', 'Number of recognised tracks in an event',20,0.,20.01)
+
     ut.bookHist(h,'RecoEff_y12', 'Recognition Efficiency, Y view station 1&2',20,0.,1.01)
     ut.bookHist(h,'TrackEff_y12', 'Track Efficiency, Y view station 1&2',20,0.,1.01)
     ut.bookHist(h,'GhostRate_y12', 'Ghost Rate, Y view station 1&2',20,0.,1.01)
@@ -202,8 +205,14 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     X = Digitization(stree,smeared_hits)
     y = get_track_ids(stree, smeared_hits)
 
+    n_tracks = len(numpy.unique(y))
+    h['NTracks'].Fill(n_tracks)
+
     track_inds = [atrack['hits'] for atrack in reco_tracks.values()]
     statnb, vnb, pnb, lnb, snb = decodeDetectorID(X[:, -1])
+
+    n_reco_tracks = len(track_inds)
+    h['NRecoTracks'].Fill(n_reco_tracks)
 
     is_stereo = ((vnb == 1) + (vnb == 2))
     is_y = ((vnb == 0) + (vnb == 3))
@@ -379,7 +388,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
     if len(reco_mc_tracks) == 2:
         h['EventsPassed'].Fill("Reconstructible tracks", 1)
 
-        if len(numpy.intersect1d(track_ids_y12, reco_mc_tracks)) == len(reco_mc_tracks): # TODO:!!!!
+        if len(numpy.intersect1d(track_ids_y12, reco_mc_tracks)) == len(reco_mc_tracks):
             h['EventsPassed'].Fill("Y view station 1&2", 1)
 
             if len(numpy.intersect1d(track_ids_stereo12, reco_mc_tracks)) == len(reco_mc_tracks):
