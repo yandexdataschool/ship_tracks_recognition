@@ -369,7 +369,7 @@ def quality_metrics(smeared_hits, stree, reco_mc_tracks, reco_tracks, h):
             atrack = reco_tracks[i]['hits']
             frac, tmax = fracMCsame(y[atrack])
             if tmax == track_id:
-                true_charge = charges[y[y == tmax]][0]
+                true_charge = charges[y == tmax][0]
                 reco_charge = reco_tracks[i]['charge']
                 if reco_charge == true_charge:
                     is_matched[num] = 1
