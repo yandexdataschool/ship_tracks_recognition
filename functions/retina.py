@@ -4,48 +4,88 @@ import numpy
 from scipy.optimize import minimize
 
 
-class Retina2DTrackerOne(object):
+class ArtificialRetina(object):
 
-    def __init__(self, n_tracks, residuals_threshold, sigma_range, sigma_decay_rate, min_hits):
+    def __init__(self,
+                 n_tracks,
+                 min_hits,
+                 residuals_threshold,
+                 sigma,
+                 k_size=0.1,
+                 b_size=10,
+                 k_limits=(-0.3, 0.3),
+                 b_limits=(-800, 800),
+                 unique_hit_labels=True):
         """
-        This class is realization of the retina idea for the tracks reconstruction.
-        :param n_tracks: int, number of tracks searching for.
-        :param residuals_threshold: float, residual threshold value for a hit to be considered as a track's hit.
-        :param sigma_range: list of floats [min, max], min and max sigma values.
-        :param sigma_decay_rate: float, sigma value will be multiplied by this value
-        on each iteration of the optimization.
-        :param min_hits: int, min number of hits in a track.
-        :return:
+        Artificial Retina method of track pattern recognition.
+
+        Parameters
+        ----------
+        n_tracks : int
+            Number of tracks to recognize.
+        min_hits : int
+            Min hits per track to be considered as recognized.
+        residuals_threshold : float
+            Max hit distance from a track.
+        sigma : float
+            Standard deviation of hit form a track.
+        k_size : int
+            Size of k-bin in track parameter space (k, b). Track parametrization: y = k * x + b.
+        b_size : int
+            Size of b-bin in track parameter space (k, b). Track parametrization: y = k * x + b.
+        k_limits : tuple
+            Tuple (min, max) of min and max allowable k-values.
+        b_limits : tuple
+            Tuple (min, max) of min and max allowable b-values.
+        unique_hit_labels : boolean
+            Is it allowable to take a hit for several tracks of not.
         """
 
         self.n_tracks = n_tracks
         self.min_hits = min_hits
-        self.sigma_range = sigma_range
-        self.sigma_decay_rate = sigma_decay_rate
+        self.sigma = sigma
         self.residuals_threshold = residuals_threshold
 
-        self.labels_ = None
+        self.k_size = k_size
+        self.b_size = b_size
+
+        self.k_limits = k_limits
+        self.b_limits = b_limits
+
+        self.unique_hit_labels = unique_hit_labels
+
         self.tracks_params_ = None
+        self.track_inds_ = None
 
     def retina_func(self, track_prams, x, y, sigma, sample_weight=None):
         """
-        Retina response.
-        :param track_prams: list of floats [k, b], track parameters for the line: y = kx + b.
-        :param x: list of floats, x-coordinates of the hits.
-        :param y: list of floats, y-coordinates of the hits.
-        :param sigma: float, sigma values.
-        :return: -R
+        Calculates the artificial retina function value.
+
+        Parameters
+        ----------
+        track_prams : array-like
+            Track parameters [k, b].
+        x : array-like
+            Array of x coordinates of hits.
+        y : array-like
+            Array of x coordinates of hits.
+        sigma : float
+            Standard deviation of hit form a track.
+        sample_weight : array-like
+            Hit weights used during the track fit.
+
+        Retunrs
+        -------
+        retina : float
+            Negative value of the artificial retina function.
         """
 
         rs = track_prams[0] * x + track_prams[1] - y
 
 
         if sample_weight == None:
-
             exps = numpy.exp(- (rs/sigma)**2)
-
         else:
-
             exps = numpy.exp(- (rs/sigma)**2) * sample_weight
 
 
@@ -55,23 +95,33 @@ class Retina2DTrackerOne(object):
 
     def retina_grad(self, track_prams, x, y, sigma, sample_weight=None):
         """
-        Retina grad.
-        :param track_prams: list of floats [k, b], track parameters for the line: y = kx + b.
-        :param x: list of floats, x-coordinates of the hits.
-        :param y: list of floats, y-coordinates of the hits.
-        :param sigma: float, sigma values.
-        :return: -R_grad
+        Calculates the artificial retina gradient.
+
+        Parameters
+        ----------
+        track_prams : array-like
+            Track parameters [k, b].
+        x : array-like
+            Array of x coordinates of hits.
+        y : array-like
+            Array of x coordinates of hits.
+        sigma : float
+            Standard deviation of hit form a track.
+        sample_weight : array-like
+            Hit weights used during the track fit.
+
+        Retunrs
+        -------
+        retina : float
+            Negative value of the artificial retina gradient.
         """
 
         rs = track_prams[0] * x + track_prams[1] - y
 
 
         if sample_weight == None:
-
             exps = numpy.exp(- (rs/sigma)**2)
-
         else:
-
             exps = numpy.exp(- (rs/sigma)**2) * sample_weight
 
 
@@ -80,123 +130,69 @@ class Retina2DTrackerOne(object):
 
         return -numpy.array([dks.sum(), dbs.sum()])
 
-    def fit_one_track(self, x, y, sample_weight=None):
+    def one_hit_per_layer(self, track_inds, x, y, layer, k, b):
         """
-        Search for one track.
-        :param x: list of floats, x-coordinates of the hits.
-        :param y: list of floats, y-coordinates of the hits.
-        :return: list of track params
-        """
+        Drop hits from the same layer. In results, only one hit per layer remains.
 
-        sigma_min = self.sigma_range[0]
-        sigma_max = self.sigma_range[1]
+        Parameters
+        ----------
+        track_inds : array-like
+            Hit indexes of a track: [ind1, ind2, ...]
+        x : array-like
+            Array of x coordinates of hits.
+        y : array-like
+            Array of x coordinates of hits.
+        layer : array-like
+            Array of layer ids of hits.
+        k : float
+            Track parameter: y = k * x + b
+        b : float
+            Track parameter: y = k * x + b
 
-        sigma = sigma_max
-        params = numpy.array([0, y[-1]])
-
-        while sigma >= sigma_min:
-
-            res = minimize(self.retina_func, params, args = (x, y, sigma, sample_weight), method='BFGS', jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
-            sigma *= self.sigma_decay_rate
-
-            params = res.x
-
-        return res.x
-
-    def fit(self, x, y, sample_weight=None):
-        """
-        Search for all tracks.
-        :param x: list of floats, x-coordinates of the hits.
-        :param y: list of floats, y-coordinates of the hits.
-        :param sample_weight: list of floats, weights of the hits.
-        :return:
+        Return
+        ------
+        track_inds1 : array-like
+            Hit indexes of a track: [ind1, ind2, ...]
+        track_inds2 : array-like
+            Hit indexes of a track: [ind1, ind2, ...]
         """
 
-        labels = -1 * numpy.ones(len(x))
-        tracks_params = []
-        if len(x) == 0:
-            self.labels_ = labels
-            self.tracks_params_ = numpy.array(tracks_params)
-            return
+        new_track_inds1 = []
+        new_track_inds2 = []
 
+        diff = numpy.abs(y - (b + k * x))
+        sorted_inds = numpy.argsort(diff)
+        used1 = []
+        used2 = []
 
-        used = numpy.zeros(len(x))
+        for i in sorted_inds:
 
-        for track_id in range(self.n_tracks):
+            if layer[i] not in used1:
+                new_track_inds1.append(track_inds[i])
+                used1.append(layer[i])
+            elif layer[i] not in used2:
+                new_track_inds2.append(track_inds[i])
+                used2.append(layer[i])
 
-            x_track = x[labels == -1]
-            y_track = y[labels == -1]
-
-            if sample_weight == None:
-
-                sample_weight_track = None
-
-            else:
-
-                sample_weight_track = sample_weight[labels == -1]
-
-            if len(numpy.unique(x_track)) < self.min_hits or len(x_track) <= 0:
-                break
-
-            one_track_params = self.fit_one_track(x_track, y_track, sample_weight_track)
-            #tracks_params.append(one_track_params)
-
-            dists = numpy.abs(one_track_params[0] * x + one_track_params[1] - y)
-
-            if ((dists <= self.residuals_threshold)*1).sum() < self.min_hits:
-                used[dists <= self.residuals_threshold] = 1
-                continue
-
-            labels[(dists <= self.residuals_threshold) & (used == 0)] = track_id
-            used[dists <= self.residuals_threshold] = 1
-
-            if len(x[labels == track_id]) >= 2:
-                one_track_params = numpy.polyfit(x[labels == track_id], y[labels == track_id], 1)
-            else:
-                one_track_params = []
-            tracks_params.append(one_track_params)
-
-
-        self.labels_ = labels
-        self.tracks_params_ = numpy.array(tracks_params)
-
-
-
-class Retina2DTrackerTwo(Retina2DTrackerOne):
-
-
-    def __init__(self, n_tracks, residuals_threshold, sigma, min_hits):
-
-        """
-        This class is realization of the retina idea for the tracks reconstruction.
-        :param n_tracks: int, number of tracks searching for.
-        :param residuals_threshold: float, residual threshold value for a hit to be considered as a track's hit.
-        :param sigma: float, sigma value for the retina function.
-        on each iteration of the optimization.
-        :param min_hits: int, min number of hits in a track.
-        :return:
-        """
-
-
-        Retina2DTrackerOne.__init__(self,
-                                    n_tracks=n_tracks,
-                                    residuals_threshold=residuals_threshold,
-                                    sigma_range=None,
-                                    sigma_decay_rate=None,
-                                    min_hits=min_hits)
-
-        self.sigma = sigma
-
-        self.labels_ = None
-        self.tracks_params_ = None
-
+        return numpy.array(new_track_inds1), numpy.array(new_track_inds2)
 
     def fit_one_track(self, x, y, sample_weight=None):
         """
-        Search for one track.
-        :param x: list of floats, x-coordinates of the hits.
-        :param y: list of floats, y-coordinates of the hits.
-        :return: list of track params
+        Finds the best track among hits. Track parametrization: y = k * x + b.
+
+        Parameters
+        ----------
+        x : array-like
+            Array of x coordinates of hits.
+        y : array-like
+            Array of x coordinates of hits.
+        sample_weight : array-like
+            Hit weights used during the track fit.
+
+        Returns
+        -------
+        track_prams : array-like
+            Track parameters [k, b].
         """
 
         sigma = self.sigma
@@ -212,6 +208,9 @@ class Retina2DTrackerTwo(Retina2DTrackerOne):
                 if x[j] <= x[i]:
                     continue
 
+                # if numpy.random.rand() > 0.5:
+                #     continue
+
                 x1 = x[i]
                 x2 = x[j]
                 y1 = y[i]
@@ -220,22 +219,96 @@ class Retina2DTrackerTwo(Retina2DTrackerOne):
                 k0 = (y2 - y1) / (x2 - x1)
                 b0 = y1 - k0 * x1
 
-                r = -self.retina_func([k0, b0], x, y, sigma, sample_weight)
+                if k0 >= self.k_limits[0] and k0 <= self.k_limits[1] and b0 >= self.b_limits[0] and b0 <= self.b_limits[1]:
 
-                rs.append(r)
-                ks.append(k0)
-                bs.append(b0)
+                    r = -self.retina_func([k0, b0], x, y, sigma, sample_weight)
+
+                    rs.append(r)
+                    ks.append(k0)
+                    bs.append(b0)
 
         rs = numpy.array(rs)
         ks = numpy.array(ks)
         bs = numpy.array(bs)
 
+        if len(rs) == 0:
+            return []
 
         params = [ks[rs == rs.max()][0], bs[rs == rs.max()][0]]
 
-        res = minimize(self.retina_func, params, args = (x, y, sigma, sample_weight), method='BFGS', jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
+        res = minimize(self.retina_func, params, args = (x, y, sigma, sample_weight), method='BFGS',
+                       jac=self.retina_grad, options={'gtol': 1e-6, 'disp': False})
 
         params = res.x
 
         return res.x
 
+    def fit(self, x, y, sample_weight=None):
+        """
+        Runs track pattern recognition. Track parametrization: y = k * x + b.
+
+        Parameters
+        ----------
+        x : array-like
+            Array of x coordinates of hits.
+        y : array-like
+            Array of x coordinates of hits.
+        sample_weight : array-like
+            Hit weights used during the track fit.
+        """
+
+        labels = -1 * numpy.ones(len(x))
+        tracks_params = []
+        track_inds = []
+
+        if len(x) == 0:
+            self.labels_ = labels
+            self.tracks_params_ = numpy.array(tracks_params)
+            self.track_inds_ = numpy.array(track_inds)
+            return
+
+
+        used = numpy.zeros(len(x))
+        indexes = numpy.arange(len(x))
+
+        for track_id in range(self.n_tracks):
+
+            x_track = x[used == 0]
+            y_track = y[used == 0]
+
+            if sample_weight == None:
+                sample_weight_track = None
+            else:
+                sample_weight_track = sample_weight[used == 0]
+
+            if len(numpy.unique(x_track)) < self.min_hits or len(x_track) <= 0:
+                break
+
+            one_track_params = self.fit_one_track(x_track, y_track, sample_weight_track)
+
+            if len(one_track_params) == 0:
+                continue
+
+            dists = numpy.abs(one_track_params[0] * x + one_track_params[1] - y)
+            dist_mask = (dists <= self.residuals_threshold)
+
+            if (dist_mask * 1).sum() < self.min_hits:
+                if self.unique_hit_labels == True:
+                    used[dist_mask] = 1
+                continue
+
+            atrack = indexes[dist_mask & (used == 0)]
+            atrack, _ = self.one_hit_per_layer(atrack, x[atrack], y[atrack], x[atrack], one_track_params[0], one_track_params[1])
+            track_inds.append(atrack)
+            if self.unique_hit_labels == True:
+                used[atrack] = 1
+
+            if len(atrack) >= 2:
+                one_track_params = numpy.polyfit(x[atrack], y[atrack], 1)
+            else:
+                one_track_params = []
+            tracks_params.append(one_track_params)
+
+
+        self.tracks_params_ = numpy.array(tracks_params)
+        self.track_inds_ = numpy.array(track_inds)
